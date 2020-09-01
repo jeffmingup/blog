@@ -1,5 +1,5 @@
 ---
-title: "【Mysql】redo log, bin log理解"
+title: "redo log, bin log理解"
 date: 2020-08-28T17:03:31+08:00
 draft: false
 tags: ["mysql"]
