@@ -1,2 +1,2 @@
 User-agent: *
-Sitemap: http://jeffmingup.github.io/blog/sitemap.xml
+Sitemap: https://jeffmingup.github.io/blog/sitemap.xml
