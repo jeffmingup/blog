@@ -1,43 +1,43 @@
-<?xml-stylesheet type="text/xsl" href="http://localhost:1313/sitemap.xsl"?>
+<?xml-stylesheet type="text/xsl" href="http://jeffmingup.github.io/blog/sitemap.xsl"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://localhost:1313/</loc>
+    <loc>http://jeffmingup.github.io/blog/tags/mysql/</loc>
     <lastmod>2020-08-28T17:03:31+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>http://localhost:1313/tags/mysql/</loc>
+    <loc>http://jeffmingup.github.io/blog/post/</loc>
     <lastmod>2020-08-28T17:03:31+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>http://localhost:1313/post/</loc>
+    <loc>http://jeffmingup.github.io/blog/post/first/</loc>
     <lastmod>2020-08-28T17:03:31+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>http://localhost:1313/post/first/</loc>
+    <loc>http://jeffmingup.github.io/blog/tags/</loc>
     <lastmod>2020-08-28T17:03:31+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>http://localhost:1313/tags/</loc>
+    <loc>http://jeffmingup.github.io/blog/</loc>
     <lastmod>2020-08-28T17:03:31+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>http://localhost:1313/categories/</loc>
+    <loc>http://jeffmingup.github.io/blog/categories/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
