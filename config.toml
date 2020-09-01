@@ -1,4 +1,4 @@
-baseURL = "http://localhost:1313/"
+baseURL = "https://jeffmingup.github.io/blog"
 languageCode = "en"
 defaultContentLanguage = "en"
 title = "Even - A super concise theme for Hugo"
