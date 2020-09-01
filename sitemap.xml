@@ -1,43 +1,43 @@
-<?xml-stylesheet type="text/xsl" href="http://jeffmingup.github.io/blog/sitemap.xsl"?>
+<?xml-stylesheet type="text/xsl" href="https://jeffmingup.github.io/blog/sitemap.xsl"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://jeffmingup.github.io/blog/tags/mysql/</loc>
+    <loc>https://jeffmingup.github.io/blog/tags/mysql/</loc>
     <lastmod>2020-08-28T17:03:31+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>http://jeffmingup.github.io/blog/post/</loc>
+    <loc>https://jeffmingup.github.io/blog/post/</loc>
     <lastmod>2020-08-28T17:03:31+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>http://jeffmingup.github.io/blog/post/first/</loc>
+    <loc>https://jeffmingup.github.io/blog/post/first/</loc>
     <lastmod>2020-08-28T17:03:31+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>http://jeffmingup.github.io/blog/tags/</loc>
+    <loc>https://jeffmingup.github.io/blog/tags/</loc>
     <lastmod>2020-08-28T17:03:31+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>http://jeffmingup.github.io/blog/</loc>
+    <loc>https://jeffmingup.github.io/blog/</loc>
     <lastmod>2020-08-28T17:03:31+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   
   <url>
-    <loc>http://jeffmingup.github.io/blog/categories/</loc>
+    <loc>https://jeffmingup.github.io/blog/categories/</loc>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
