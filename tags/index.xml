@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tags on Even - A super concise theme for Hugo</title>
-    <link>https://jeffmingup.github.io/blog/tags/</link>
+    <link>http://localhost:1313/tags/</link>
     <description>Recent content in Tags on Even - A super concise theme for Hugo</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en</language>
     <lastBuildDate>Fri, 28 Aug 2020 17:03:31 +0800</lastBuildDate>
     
-	<atom:link href="https://jeffmingup.github.io/blog/tags/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="http://localhost:1313/tags/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>mysql</title>
-      <link>https://jeffmingup.github.io/blog/tags/mysql/</link>
+      <link>http://localhost:1313/tags/mysql/</link>
       <pubDate>Fri, 28 Aug 2020 17:03:31 +0800</pubDate>
       
-      <guid>https://jeffmingup.github.io/blog/tags/mysql/</guid>
+      <guid>http://localhost:1313/tags/mysql/</guid>
       <description></description>
     </item>
     
