@@ -49,7 +49,7 @@ tags: ["mysql"]
 
 - redo log是InnoDB引擎特有的；bin log是MySQl的Server层是实现的，所有的引擎都可以使用。
 - redo log是物理日志，记录的是“某行记录做了什么改动”；bin log是逻辑日志记录的是这语句的原始逻辑（有一种statement 记的sql语句）
-- redo log是循环写入的，固定空间回用完；bin log是追加写入的。“追加写”是指bin log文件写到一定大小后回切换到下一个，不会覆盖以前的日志。 
+- redo log是循环写入的，固定空间会用完；bin log是追加写入的。“追加写”是指bin log文件写到一定大小后回切换到下一个，不会覆盖以前的日志。 
 
 
 
