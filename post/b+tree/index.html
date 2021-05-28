@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <title>redo log, bin log理解 - 王明的博客</title>
+  <title> - 王明的博客</title>
   <meta name="renderer" content="webkit" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
 
@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
 
 
-<meta name="author" content="王明" /><meta name="description" content="redo log （事务日志） ​ 表数据在磁盘里相当于酒店的赊账总账本，账本太大了，避免每次客人来消费都要翻找账本修改的麻烦。可以先把客人这次的消费记录到一" /><meta name="keywords" content="王明, 博客, blog" />
+<meta name="author" content="王明" /><meta name="description" content="" /><meta name="keywords" content="王明, 博客, blog" />
 
 
 
@@ -26,7 +26,7 @@
 <meta name="generator" content="Hugo 0.70.0 with theme even" />
 
 
-<link rel="canonical" href="https://jeffmingup.github.io/blog/post/first/" />
+<link rel="canonical" href="https://jeffmingup.github.io/blog/post/b&#43;tree/" />
 <link rel="apple-touch-icon" sizes="180x180" href="https://jeffmingup.github.io/blog/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="https://jeffmingup.github.io/blog/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="https://jeffmingup.github.io/blog/favicon-16x16.png">
@@ -39,23 +39,21 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
 
 
-<meta property="og:title" content="redo log, bin log理解" />
-<meta property="og:description" content="redo log （事务日志） ​ 表数据在磁盘里相当于酒店的赊账总账本，账本太大了，避免每次客人来消费都要翻找账本修改的麻烦。可以先把客人这次的消费记录到一" />
+<meta property="og:title" content="" />
+<meta property="og:description" content="" />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://jeffmingup.github.io/blog/post/first/" />
-<meta property="article:published_time" content="2020-08-28T17:03:31+08:00" />
-<meta property="article:modified_time" content="2020-08-28T17:03:31+08:00" />
-<meta itemprop="name" content="redo log, bin log理解">
-<meta itemprop="description" content="redo log （事务日志） ​ 表数据在磁盘里相当于酒店的赊账总账本，账本太大了，避免每次客人来消费都要翻找账本修改的麻烦。可以先把客人这次的消费记录到一">
-<meta itemprop="datePublished" content="2020-08-28T17:03:31&#43;08:00" />
-<meta itemprop="dateModified" content="2020-08-28T17:03:31&#43;08:00" />
-<meta itemprop="wordCount" content="1194">
+<meta property="og:url" content="https://jeffmingup.github.io/blog/post/b&#43;tree/" />
+
+<meta itemprop="name" content="">
+<meta itemprop="description" content="">
+
+<meta itemprop="wordCount" content="0">
 
 
 
-<meta itemprop="keywords" content="mysql," /><meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="redo log, bin log理解"/>
-<meta name="twitter:description" content="redo log （事务日志） ​ 表数据在磁盘里相当于酒店的赊账总账本，账本太大了，避免每次客人来消费都要翻找账本修改的麻烦。可以先把客人这次的消费记录到一"/>
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content=""/>
+<meta name="twitter:description" content=""/>
 
 <!--[if lte IE 9]>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
@@ -118,10 +116,10 @@
           <article class="post">
     
     <header class="post-header">
-      <h1 class="post-title">redo log, bin log理解</h1>
+      <h1 class="post-title"></h1>
 
       <div class="post-meta">
-        <span class="post-time"> 2020-08-28 </span>
+        <span class="post-time"> 0001-01-01 </span>
         
         
       </div>
@@ -130,61 +128,11 @@
     <div class="post-toc" id="post-toc">
   <h2 class="post-toc-title">文章目录</h2>
   <div class="post-toc-content always-active">
-    <nav id="TableOfContents">
-  <ul>
-    <li>
-      <ul>
-        <li><a href="#redo-log-事务日志">redo log （事务日志）</a></li>
-        <li><a href="#bin-log-归档日志">bin log （归档日志）</a></li>
-        <li><a href="#redo-log-和bin-log的不同">redo log 和bin log的不同</a></li>
-        <li><a href="#update语句的流程图">update语句的流程图</a></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
+    <nav id="TableOfContents"></nav>
   </div>
 </div>
     <div class="post-content">
-      <h2 id="redo-log-事务日志">redo log （事务日志）</h2>
-<p>​      表数据在磁盘里相当于酒店的赊账总账本，账本太大了，避免每次客人来消费都要翻找账本修改的麻烦。可以先把客人这次的消费记录到一个粉板上，每次客人来都只需要把当前消费先记录到粉板上，就不需要找账本了，等空闲或者打烊的时候再把修改同步到账本就可以了。</p>
-<p>​	他的关键点事先写日志（磁盘上的一小块区域的顺序io），再写磁盘（随机io）。也就是先记粉板，等不忙的时候再记账本。</p>
-<p>​	粉板和账本配合的这个过程，其实就是mysql中常说的WAL技术（Write-Ahead Logging）。事务日志采用的是追加的方式，因此写日志操作，是磁盘上的一小块区域的顺序io，而不像随机io需要在磁盘的多个地方移动磁头，所以采用事务日志的方式相对来说要快很多。事务日志持久以后，内存中被修改的数据再后台可以慢慢的刷回磁盘。WAL技术修改数据的时候修改要写两次磁盘。</p>
-<p>​	如果数据的修改以及记录到事务日志并持久化，但数据本身还没有写回磁盘，此时系统崩溃，存储引擎也可以在重启时候根据事务日志来恢复这部分的数据。</p>
-<p>​</p>
-<h2 id="bin-log-归档日志">bin log （归档日志）</h2>
-<p>​	  bin log 是mysql 的server层的的日志，bin log 日志用来记录对数据的修改，这样可以根据bin log 来做备份还原，主从复制。</p>
-<p>​	bin log的记录方式有三种：</p>
-<ol>
-<li>
-<p>基于语句的复制（statement）</p>
-<p>优点：更少的日志空间 ，复制快。</p>
-<p>缺点：不能确保数据的正确复制，例如存储过程中函数的处理，delete limit语句没有使用order by，删除的数据可以不一致等等</p>
-</li>
-<li>
-<p>基于行的复制（默认）（row）</p>
-<p>优点：任何改变都可以写入日志，也是最安全的方式。</p>
-<p>缺点：日志文件更大，复制起来麻烦，一个批量修改会产生多条日志。</p>
-</li>
-<li>
-<p>混合方式</p>
-</li>
-</ol>
-<h2 id="redo-log-和bin-log的不同">redo log 和bin log的不同</h2>
-<ul>
-<li>redo log是InnoDB引擎特有的；bin log是MySQl的Server层是实现的，所有的引擎都可以使用。</li>
-<li>redo log是物理日志，记录的是“某行记录做了什么改动”；bin log是逻辑日志记录的是这语句的原始逻辑（有一种statement 记的sql语句）</li>
-<li>redo log是循环写入的，固定空间会用完；bin log是追加写入的。“追加写”是指bin log文件写到一定大小后回切换到下一个，不会覆盖以前的日志。</li>
-</ul>
-<h2 id="update语句的流程图">update语句的流程图</h2>
-<p>图中浅色框表示是在InnoDB内部执行的，深色框表示在执行器中执行的。</p>
-<p><img src="https://tva1.sinaimg.cn/large/007S8ZIlly1gia4u5zeudj30u013zdr4.jpg" alt="img"></p>
-<p>redo log 事务日志的两段式提交：prepare 和commit</p>
-<ul>
-<li>假如redo log先写入成功，而binlog 后写入失败，从库是根据binlog来复制的，这有可能出现主库和从库数据不一致。</li>
-<li>假如bin log先写入成功，后redo log写入失败的话，此时系统崩溃，redo log 还没有写入，恢复数据时候这个事务无效。但是bin log 中却存在这一行记录，之后使用bin log的时候就会多出一个事务来，与原库不一致。</li>
-</ul>
-<p>redo log和bin log 都可以表示事务的提交状态，而两段式的提交就是让这两个状态保持逻辑上的一致。</p>
-
+      
     </div>
 
     <div class="post-copyright">
@@ -195,7 +143,7 @@
   <p class="copyright-item">
     <span class="item-title">上次更新</span>
     <span class="item-content">
-        2020-08-28
+        0001-01-01
         
     </span>
   </p>
@@ -203,11 +151,13 @@
   
 </div>
 <footer class="post-footer">
-      <div class="post-tags">
-          <a href="https://jeffmingup.github.io/blog/tags/mysql/">mysql</a>
-          </div>
+      
       <nav class="post-nav">
-        
+        <a class="prev" href="https://jeffmingup.github.io/blog/post/first/">
+            <i class="iconfont icon-left"></i>
+            <span class="prev-text nav-default">redo log, bin log理解</span>
+            <span class="prev-text nav-mobile">上一篇</span>
+          </a>
         
       </nav>
     </footer>
@@ -218,8 +168,8 @@
     <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" crossorigin="anonymous"></script>
     <script type="text/javascript">
       var gitalk = new Gitalk({
-        id: '2020-08-28 17:03:31 \x2b0800 CST',
-        title: 'redo log, bin log理解',
+        id: '0001-01-01 00:00:00 \x2b0000 UTC',
+        title: '',
         clientID: '594c5d359f317c8119dc',
         clientSecret: '808944f21937c3b85840b3b3d119d7e6e4a104d3',
         repo: 'blog',
