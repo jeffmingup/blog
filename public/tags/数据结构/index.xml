@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>mysql on 王明的博客</title>
-    <link>https://jeffmingup.github.io/blog/tags/mysql/</link>
-    <description>Recent content in mysql on 王明的博客</description>
+    <title>数据结构 on 王明的博客</title>
+    <link>https://jeffmingup.github.io/blog/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</link>
+    <description>Recent content in 数据结构 on 王明的博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <lastBuildDate>Thu, 27 May 2021 20:00:56 +0800</lastBuildDate>
     
-	<atom:link href="https://jeffmingup.github.io/blog/tags/mysql/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://jeffmingup.github.io/blog/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
@@ -18,15 +18,6 @@
       
       <guid>https://jeffmingup.github.io/blog/post/b&#43;tree/</guid>
       <description>首先mysql是一个数据库，那数据库是干啥用呢？大家都知道用来存储和查询的。关键字来了“存储”，“查询”，存储包含新增，更新，删除。更新和删</description>
-    </item>
-    
-    <item>
-      <title>redo log, bin log理解</title>
-      <link>https://jeffmingup.github.io/blog/post/first/</link>
-      <pubDate>Fri, 28 Aug 2020 17:03:31 +0800</pubDate>
-      
-      <guid>https://jeffmingup.github.io/blog/post/first/</guid>
-      <description>redo log （事务日志） ​ 表数据在磁盘里相当于酒店的赊账总账本，账本太大了，避免每次客人来消费都要翻找账本修改的麻烦。可以先把客人这次的消费记录到一</description>
     </item>
     
   </channel>
