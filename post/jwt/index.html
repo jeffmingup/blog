@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <title>标签 - 王明的博客</title>
+  <title>jwt认证 - 王明的博客</title>
   <meta name="renderer" content="webkit" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
 
@@ -16,7 +16,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
 
 
-<meta name="author" content="王明" /><meta name="description" content="王明的博客" /><meta name="keywords" content="王明, 博客, blog" />
+<meta name="author" content="王明" /><meta name="description" content="jwt是一种常见跨域认证方式，之前验证用户登陆通常使用session机制。 session是client访问server之后，server生成" /><meta name="keywords" content="王明, 博客, blog" />
 
 
 
@@ -26,9 +26,7 @@
 <meta name="generator" content="Hugo 0.70.0 with theme even" />
 
 
-<link rel="canonical" href="https://jeffmingup.github.io/blog/tags/" />
-  <link href="https://jeffmingup.github.io/blog/tags/index.xml" rel="alternate" type="application/rss+xml" title="王明的博客" />
-  <link href="https://jeffmingup.github.io/blog/tags/index.xml" rel="feed" type="application/rss+xml" title="王明的博客" />
+<link rel="canonical" href="https://jeffmingup.github.io/blog/post/jwt/" />
 <link rel="apple-touch-icon" sizes="180x180" href="https://jeffmingup.github.io/blog/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="https://jeffmingup.github.io/blog/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="https://jeffmingup.github.io/blog/favicon-16x16.png">
@@ -41,15 +39,23 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
 
 
-<meta property="og:title" content="Tags" />
-<meta property="og:description" content="王明的博客" />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://jeffmingup.github.io/blog/tags/" />
-<meta property="og:updated_time" content="2021-05-27T20:00:56+08:00" />
-<meta itemprop="name" content="Tags">
-<meta itemprop="description" content="王明的博客"><meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Tags"/>
-<meta name="twitter:description" content="王明的博客"/>
+<meta property="og:title" content="jwt认证" />
+<meta property="og:description" content="jwt是一种常见跨域认证方式，之前验证用户登陆通常使用session机制。 session是client访问server之后，server生成" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jeffmingup.github.io/blog/post/jwt/" />
+<meta property="article:published_time" content="2021-06-02T22:49:18+08:00" />
+<meta property="article:modified_time" content="2021-06-02T22:49:18+08:00" />
+<meta itemprop="name" content="jwt认证">
+<meta itemprop="description" content="jwt是一种常见跨域认证方式，之前验证用户登陆通常使用session机制。 session是client访问server之后，server生成">
+<meta itemprop="datePublished" content="2021-06-02T22:49:18&#43;08:00" />
+<meta itemprop="dateModified" content="2021-06-02T22:49:18&#43;08:00" />
+<meta itemprop="wordCount" content="528">
+
+
+
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="jwt认证"/>
+<meta name="twitter:description" content="jwt是一种常见跨域认证方式，之前验证用户登陆通常使用session机制。 session是client访问server之后，server生成"/>
 
 <!--[if lte IE 9]>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
@@ -109,24 +115,101 @@
     <main id="main" class="main">
       <div class="content-wrapper">
         <div id="content" class="content">
-          <div class="terms">
-      <div class="terms-title">
-        共计 2 个标签
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">jwt认证</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2021-06-02 </span>
+        
+        
       </div>
-      <div class="terms-tags">
-          <a class="terms-link" href="https://jeffmingup.github.io/blog/tags/mysql/">
-            mysql
-            <span class="terms-count">2</span>
-          </a>
-        
-          <a class="terms-link" href="https://jeffmingup.github.io/blog/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/">
-            数据结构
-            <span class="terms-count">1</span>
-          </a>
-        </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li>
+          <ul>
+            <li></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <p>jwt是一种常见跨域认证方式，之前验证用户登陆通常使用session机制。</p>
+<p>session是client访问server之后，server生成一个唯一ID返回给用户，sever可以用这个ID做为key存储一些用户信息（可能是已经登陆，或者一些用户状态信息）。之后用户访问问服务器的时候带上这个ID，服务器就可以根据ID来查到当前用户的一些状态信息了。</p>
+<p>jwt是client访问server之后，server把一些用户信息做下签名，签名的方式是对（用户信息+密钥）进行加密。签名和用户拼接在一起当作token返回给client，client之后访问的时候带上token，server拆分用户信息和签名，server用自己本地保存的密钥和用户信息再次加密（也就是再次签名）和用户传上来的密钥进行对比，如果一致则信息未被修改。server则可以信任token中的用户信息。</p>
+<h4 id="优点">优点</h4>
+<ul>
+<li>jwt信息存储在client端，节省server的空间，而且session在多台server的时候需要做集中处理。</li>
+</ul>
+<h4 id="缺点">缺点</h4>
+<ul>
+<li>jwt的用户信息是base64编码的，不能存储敏感信息（或者再进行加密）</li>
+<li>jwt的token一旦签发就不受控制，在有效期内token会一直有效（或者通过黑名单的方式进行处理）</li>
+</ul>
+
     </div>
-        </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">王明</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2021-06-02
         
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        
+        <a class="next" href="https://jeffmingup.github.io/blog/post/b&#43;tree/">
+            <span class="next-text nav-default">为什么mysql存储要用b&#43;树</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        <div id="gitalk-container"></div>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+      var gitalk = new Gitalk({
+        id: '2021-06-02 22:49:18 \x2b0800 CST',
+        title: 'jwt认证',
+        clientID: '594c5d359f317c8119dc',
+        clientSecret: '808944f21937c3b85840b3b3d119d7e6e4a104d3',
+        repo: 'blog',
+        owner: 'jeffmingup',
+        admin: ['jeffmingup'],
+        body: decodeURI(location.href)
+      });
+      gitalk.render('gitalk-container');
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/gitalk/gitalk">comments powered by gitalk.</a></noscript>
+
+  
+
+  
 
       </div>
     </main>
