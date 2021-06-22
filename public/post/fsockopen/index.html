@@ -49,7 +49,7 @@
 <meta itemprop="description" content="​ 在公司无意间看到一个异步http客户端的PHP代码，来了兴趣，进去一看是调用了fsockopen这个函数发送的http请求，代码差不多如下">
 <meta itemprop="datePublished" content="2021-06-22T11:45:59&#43;08:00" />
 <meta itemprop="dateModified" content="2021-06-22T11:45:59&#43;08:00" />
-<meta itemprop="wordCount" content="1638">
+<meta itemprop="wordCount" content="1635">
 
 
 
@@ -259,14 +259,13 @@
 </div>
 </div><p>​</p>
 <p><img src="https://raw.githubusercontent.com/jeffmingup/image/master/img/image-20210622170917096.png" alt="image-20210622170917096"></p>
-<p>​	本地端口60221  &mdash;&gt;  nginx端口80</p>
-<p>​	nginx反向代理请求go服务</p>
-<p>​	Nginx端口60222 &mdash;&gt; go web端口82</p>
+<p>​	<em><strong>本地端口60221  &mdash;&gt;  nginx端口80</strong></em></p>
+<p>​	<em><strong>nginx反向代理请求go服务</strong></em></p>
+<p>​	<em><strong>Nginx端口60222 &mdash;&gt; go web端口82</strong></em></p>
 <p>​	(48-49)可以看到fsockopen.php发送完http请求就直接发送fin包表示断开了。</p>
-<pre><code>之后(52-5095) nginx作为代理服务器依然和go服务发起了三次握手，发送http请求，接受响应，四次挥手，走了完整流程。
-</code></pre>
+<p>​	之后(52-5095) nginx作为代理服务器依然和go服务发起了三次握手，发送http请求，接受响应，四次挥手，走了完整流程。</p>
 <p>​	(5090-5093)最后nginx作为代理服务器，还想通过80端口把go服务的响应返回给PHP脚本。脚本进程早就退出了，所以一直返回RST包（重置连接）。</p>
-<p>​	这就说通了。**nginx 的proxy_ignore_client_abort开启之后，作为代理服务器，在客户端断开之后，依然会保持连接请求服务器资源。**所以这个参数很危险，已经没有客户端连接接受响应了却还在处理请求，浪费服务器资源，一般不要开，除非你知道你在干啥。</p>
+<p>​	这就说通了。<u>nginx 的proxy_ignore_client_abort开启之后，作为代理服务器，在客户端断开之后，依然会保持连接请求服务器资源。</u>所以这个参数很危险，已经没有客户端连接接受响应了却还在处理请求，浪费服务器资源，一般不要开，除非你知道你在干啥。</p>
 <p>​	最后我直接通过curl访问lnmp服务。然后ctrl+c断开。ignore_user_abort还是没有起作用。。。</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
