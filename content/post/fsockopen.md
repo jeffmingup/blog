@@ -1,7 +1,7 @@
 ---
 title: "记录fsockopen引发的一些思考和小坑"
 date: 2021-06-22T11:45:59+08:00
-draft: true
+draft: false
 ---
 
 ​	在公司无意间看到一个异步http客户端的PHP代码，来了兴趣，进去一看是调用了**fsockopen**这个函数发送的http请求，代码差不多如下<fsockopen.php>:
