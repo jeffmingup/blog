@@ -6,10 +6,19 @@
     <description>Recent content on 王明的博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Tue, 22 Jun 2021 11:45:59 +0800</lastBuildDate>
+    <lastBuildDate>Mon, 06 Sep 2021 21:40:48 +0800</lastBuildDate>
     
 	<atom:link href="https://jeffmingup.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>docker容器内部使用代理</title>
+      <link>https://jeffmingup.github.io/blog/post/proxy/</link>
+      <pubDate>Mon, 06 Sep 2021 21:40:48 +0800</pubDate>
+      
+      <guid>https://jeffmingup.github.io/blog/post/proxy/</guid>
+      <description>Docker容器内需要翻墙的话，一般有两种方法 (1) 在~/.docker/config.json 加上配置信息，代理服务器的话不能用127.0.0</description>
+    </item>
     
     <item>
       <title>记录fsockopen引发的一些思考和小坑</title>

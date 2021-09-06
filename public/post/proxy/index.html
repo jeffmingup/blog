@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>docker容器内部使用代理 - 王明的博客</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="王明" /><meta name="description" content="Docker容器内需要翻墙的话，一般有两种方法 (1) 在~/.docker/config.json 加上配置信息，代理服务器的话不能用127.0.0" /><meta name="keywords" content="王明, 博客, blog" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.70.0 with theme even" />
+
+
+<link rel="canonical" href="https://jeffmingup.github.io/blog/post/proxy/" />
+<link rel="apple-touch-icon" sizes="180x180" href="https://jeffmingup.github.io/blog/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://jeffmingup.github.io/blog/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://jeffmingup.github.io/blog/favicon-16x16.png">
+<link rel="manifest" href="https://jeffmingup.github.io/blog/manifest.json">
+<link rel="mask-icon" href="https://jeffmingup.github.io/blog/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="https://jeffmingup.github.io/blog/sass/main.min.651e6917abb0239242daa570c2bec9867267bbcd83646da5a850afe573347b44.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="docker容器内部使用代理" />
+<meta property="og:description" content="Docker容器内需要翻墙的话，一般有两种方法 (1) 在~/.docker/config.json 加上配置信息，代理服务器的话不能用127.0.0" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jeffmingup.github.io/blog/post/proxy/" />
+<meta property="article:published_time" content="2021-09-06T21:40:48+08:00" />
+<meta property="article:modified_time" content="2021-09-06T21:40:48+08:00" />
+<meta itemprop="name" content="docker容器内部使用代理">
+<meta itemprop="description" content="Docker容器内需要翻墙的话，一般有两种方法 (1) 在~/.docker/config.json 加上配置信息，代理服务器的话不能用127.0.0">
+<meta itemprop="datePublished" content="2021-09-06T21:40:48&#43;08:00" />
+<meta itemprop="dateModified" content="2021-09-06T21:40:48&#43;08:00" />
+<meta itemprop="wordCount" content="231">
+
+
+
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="docker容器内部使用代理"/>
+<meta name="twitter:description" content="Docker容器内需要翻墙的话，一般有两种方法 (1) 在~/.docker/config.json 加上配置信息，代理服务器的话不能用127.0.0"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="https://jeffmingup.github.io/blog/" class="logo">Ming</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="https://jeffmingup.github.io/blog/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="https://jeffmingup.github.io/blog/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="https://jeffmingup.github.io/blog/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="https://jeffmingup.github.io/blog/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="https://jeffmingup.github.io/blog/" class="logo">Ming</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="https://jeffmingup.github.io/blog/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="https://jeffmingup.github.io/blog/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="https://jeffmingup.github.io/blog/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="https://jeffmingup.github.io/blog/categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">docker容器内部使用代理</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2021-09-06 </span>
+        
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents"></nav>
+  </div>
+</div>
+    <div class="post-content">
+      <p><strong>Docker容器内需要翻墙的话，一般有两种方法</strong></p>
+<p>(1)  <strong>在~/.docker/config.json 加上配置信息，代理服务器的话不能用127.0.0.1，因为容器内和宿主机一般是两个网络环境。可以使用宿主机当前局域网的ip地址。</strong></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+ <span class="nt">&#34;proxies&#34;</span><span class="p">:</span>
+ <span class="p">{</span>
+   <span class="nt">&#34;default&#34;</span><span class="p">:</span>
+   <span class="p">{</span>
+     <span class="nt">&#34;httpProxy&#34;</span><span class="p">:</span> <span class="s2">&#34;http://192.168.1.12:7890&#34;</span><span class="p">,</span>
+     <span class="nt">&#34;httpsProxy&#34;</span><span class="p">:</span> <span class="s2">&#34;http://192.168.1.12:7890&#34;</span><span class="p">,</span>
+     <span class="nt">&#34;noProxy&#34;</span><span class="p">:</span> <span class="s2">&#34;*.test.example.com,.example2.com,localhost,127.0.0.0/8&#34;</span>
+   <span class="p">}</span>
+ <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>(2)  <strong>build 或者 run 的时候使用&ndash;env 加参数，再或者在dockerfile中加上也行</strong></p>
+<p>ENV HTTP_PROXY http://192.168.1.7:7890</p>
+<p>ENV HTTPS_PROXY http://192.168.1.7:7890</p>
+<p><em><strong>附注: 如果是golang项目的话，也可以是用go mod 代理。dockerfile中加上</strong></em></p>
+<p>ENV GO111MODULE on</p>
+<p>ENV GOPROXY <a href="https://goproxy.io">https://goproxy.io</a>,direct</p>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">王明</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2021-09-06
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        
+        <a class="next" href="https://jeffmingup.github.io/blog/post/fsockopen/">
+            <span class="next-text nav-default">记录fsockopen引发的一些思考和小坑</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        <div id="gitalk-container"></div>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+      var gitalk = new Gitalk({
+        id: '2021-09-06 21:40:48 \x2b0800 CST',
+        title: 'docker容器内部使用代理',
+        clientID: '594c5d359f317c8119dc',
+        clientSecret: '808944f21937c3b85840b3b3d119d7e6e4a104d3',
+        repo: 'blog',
+        owner: 'jeffmingup',
+        admin: ['jeffmingup'],
+        body: decodeURI(location.href)
+      });
+      gitalk.render('gitalk-container');
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/gitalk/gitalk">comments powered by gitalk.</a></noscript>
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:1920588251@qq.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/jeffmingup" class="iconfont icon-github" title="github"></a>
+  <a href="https://jeffmingup.github.io/blog/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2020 - 
+    2021
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">王明</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="https://jeffmingup.github.io/blog/js/main.min.d7b7ada643c9c1a983026e177f141f7363b4640d619caf01d8831a6718cd44ea.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
