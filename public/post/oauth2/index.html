@@ -49,7 +49,7 @@
 <meta itemprop="description" content="1.前言 OAuth2 是一个授权框架，或称授权标准。简单解释：允许用户让第三方应用访问该用户在某一网站上存储的私密的资源（如照片，视频，联系人列表），而">
 <meta itemprop="datePublished" content="2021-09-15T10:25:53&#43;08:00" />
 <meta itemprop="dateModified" content="2021-09-15T10:25:53&#43;08:00" />
-<meta itemprop="wordCount" content="4326">
+<meta itemprop="wordCount" content="4329">
 
 
 
@@ -198,7 +198,7 @@
 <h2 id="3oauth-2-的授权流程">3.OAuth 2 的授权流程</h2>
 <p><img src="https://raw.githubusercontent.com/jeffmingup/image/master/img/202109151626306.png" alt="img"></p>
 <ol>
-<li>Authrization Request
+<li>Authorization Request
 客户端向用户请求对资源服务器的<code>authorization grant</code>。</li>
 <li>Authorization Grant（Get）
 如果用户授权该次请求，客户端将收到一个<code>authorization grant</code>。</li>
@@ -269,7 +269,7 @@
 <li>state
 由客户端生成的随机字符串，步骤2中用户进行授权客户端的请求时也会携带此字符串用于比较，这是为了防止<code>CSRF</code>攻击。</li>
 </ul>
-<h4 id="2-user-authorizes-applcation">2. User Authorizes Applcation</h4>
+<h4 id="2-user-authorizes-application">2. User Authorizes Application</h4>
 <p>当用户点击上文中的示例链接时，用户必须已经在授权服务中进行登录（否则将会跳转到登录界面，<strong>不过 OAuth 2 并不关心认证过程</strong>），然后授权服务会提示用户授权或拒绝应用程序访问其帐户。以下是授权应用程序的示例：</p>
 <p><img src="https://raw.githubusercontent.com/jeffmingup/image/master/img/202109151634688.png" alt="img"></p>
 <h4 id="3-authorization-code-grant">3. Authorization Code Grant</h4>
@@ -359,7 +359,7 @@ A8080&amp;state=state-296bc9a0-a2a2-4a57-be1a-d0e2fd9bb601&amp;nonce=foo&#39;
 <h4 id="4-user-agent-follows-the-redirect-uri">4. User-agent Follows the Redirect URI</h4>
 <p><code>User-agent</code>（浏览器）遵循重定向指令，请求<code>redirect_uri</code>标识的客户端地址，<strong>并在本地保留 uri 的 #fragment 部分的<code>access_token</code>信息</strong>。</p>
 <h4 id="5-application-sends-access-token-extraction-script">5. Application Sends Access Token Extraction Script</h4>
-<p>客户端生成一个包含 token 解构脚本的 Html 页面，这个页面被发送给<code>User-agent</code>（浏览器），执行脚本解构完整的<code>redirect_uri</code>并提取其中的<code>access_token</code>（<code>access token</code>信息在第4步中已经被<code>User-agent</code>保存）。</p>
+<p>客户端生成一个包含 token 解构脚本的 html页面，这个页面被发送给<code>User-agent</code>（浏览器），执行脚本解构完整的<code>redirect_uri</code>并提取其中的<code>access_token</code>（<code>access token</code>信息在第4步中已经被<code>User-agent</code>保存）。</p>
 <h4 id="6-access-token-passed-to-application">6. Access Token Passed to Application</h4>
 <p><code>User-agent</code>（浏览器）向客户端发送解构提取的<code>access token</code>。</p>
 <p>至此，授权流程全部结束。直到<code>access token</code> 过期或失效之前，客户端可以通过资源服务器API访问用户的帐户，并具备<code>scope</code>中给定的操作权限。</p>

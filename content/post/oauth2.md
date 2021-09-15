@@ -48,7 +48,7 @@ OAuth 2 标准中定义了以下几种角色
 
 ![img](https://raw.githubusercontent.com/jeffmingup/image/master/img/202109151626306.png)
 
-1. Authrization Request
+1. Authorization Request
    客户端向用户请求对资源服务器的`authorization grant`。
 2. Authorization Grant（Get）
    如果用户授权该次请求，客户端将收到一个`authorization grant`。
@@ -120,7 +120,7 @@ https://authorization-server.com/auth
 - state
   由客户端生成的随机字符串，步骤2中用户进行授权客户端的请求时也会携带此字符串用于比较，这是为了防止`CSRF`攻击。
 
-#### 2. User Authorizes Applcation
+#### 2. User Authorizes Application
 
 当用户点击上文中的示例链接时，用户必须已经在授权服务中进行登录（否则将会跳转到登录界面，**不过 OAuth 2 并不关心认证过程**），然后授权服务会提示用户授权或拒绝应用程序访问其帐户。以下是授权应用程序的示例：
 
@@ -206,7 +206,7 @@ http://localhost:8080/#access_token=eyJhb[...]erw&token_type=Bearer&expires_in=3
 
 #### 5. Application Sends Access Token Extraction Script
 
-客户端生成一个包含 token 解构脚本的 Html 页面，这个页面被发送给`User-agent`（浏览器），执行脚本解构完整的`redirect_uri`并提取其中的`access_token`（`access token`信息在第4步中已经被`User-agent`保存）。
+客户端生成一个包含 token 解构脚本的 html页面，这个页面被发送给`User-agent`（浏览器），执行脚本解构完整的`redirect_uri`并提取其中的`access_token`（`access token`信息在第4步中已经被`User-agent`保存）。
 
 #### 6. Access Token Passed to Application
 
