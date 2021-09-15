@@ -46,9 +46,7 @@ OAuth 2 标准中定义了以下几种角色
 
 ## 3.OAuth 2 的授权流程
 
-<img src="https://raw.githubusercontent.com/jeffmingup/image/master/img/202109151626306.png" alt="img"  />
-
-
+![img](https://raw.githubusercontent.com/jeffmingup/image/master/img/202109151626306.png)
 
 1. Authrization Request
    客户端向用户请求对资源服务器的`authorization grant`。
@@ -73,7 +71,7 @@ OAuth 2 标准中定义了以下几种角色
 
 重定向URI是授权方服务在用户授权（或拒绝）应用程序之后重定向供用户访问的地址，因此也是用于处理授权码或访问令牌的应用程序的一部分。
 
-###  3.1lient ID 和 Client Secret
+###  3.1 Client ID 和 Client Secret
 
 一旦你的应用注册成功，授权方服务将以`client id`和`client secret`的形式为应用发布`client credentials`（客户端凭证）。`client id`是公开透明的字符串，授权方服务使用该字符串来标识应用程序，并且还用于构建呈现给用户的授权 url 。当应用请求访问用户的帐户时，`client secret`用于验证应用身份，并且必须在客户端和服务之间保持私有性。
 
@@ -96,7 +94,7 @@ OAuth 2 标准中定义了以下几种角色
 
 `Authorization Code` 是最常使用的一种授权许可类型，它适用于第三方应用类型为`server-side`型应用的场景。`Authorization Code`授权流程基于重定向跳转，客户端必须能够与`User-agent`（即用户的 Web 浏览器）交互并接收通过`User-agent`路由发送的实际`authorization code`值。
 
-<img src="https://raw.githubusercontent.com/jeffmingup/image/master/img/202109151631129.png" alt="img"  />
+![img](https://raw.githubusercontent.com/jeffmingup/image/master/img/202109151631129.png)
 
 ####  User Authorization Request
 
