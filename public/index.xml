@@ -6,10 +6,19 @@
     <description>Recent content on 王明的博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Mon, 06 Sep 2021 21:40:48 +0800</lastBuildDate>
+    <lastBuildDate>Wed, 15 Sep 2021 10:25:53 +0800</lastBuildDate>
     
 	<atom:link href="https://jeffmingup.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>OAuth2授权框架</title>
+      <link>https://jeffmingup.github.io/blog/post/oauth2/</link>
+      <pubDate>Wed, 15 Sep 2021 10:25:53 +0800</pubDate>
+      
+      <guid>https://jeffmingup.github.io/blog/post/oauth2/</guid>
+      <description>1.前言 OAuth2 是一个授权框架，或称授权标准。简单解释：允许用户让第三方应用访问该用户在某一网站上存储的私密的资源（如照片，视频，联系人列表），而</description>
+    </item>
     
     <item>
       <title>docker容器内部使用代理</title>
