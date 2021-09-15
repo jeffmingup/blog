@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>OAuth2授权框架 - 王明的博客</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="王明" /><meta name="description" content="1.前言 OAuth2 是一个授权框架，或称授权标准。简单解释：允许用户让第三方应用访问该用户在某一网站上存储的私密的资源（如照片，视频，联系人列表），而" /><meta name="keywords" content="王明, 博客, blog" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.68.3 with theme even" />
+
+
+<link rel="canonical" href="https://jeffmingup.github.io/blog/post/oauth2/" />
+<link rel="apple-touch-icon" sizes="180x180" href="https://jeffmingup.github.io/blog/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://jeffmingup.github.io/blog/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://jeffmingup.github.io/blog/favicon-16x16.png">
+<link rel="manifest" href="https://jeffmingup.github.io/blog/manifest.json">
+<link rel="mask-icon" href="https://jeffmingup.github.io/blog/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="https://jeffmingup.github.io/blog/sass/main.min.651e6917abb0239242daa570c2bec9867267bbcd83646da5a850afe573347b44.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="OAuth2授权框架" />
+<meta property="og:description" content="1.前言 OAuth2 是一个授权框架，或称授权标准。简单解释：允许用户让第三方应用访问该用户在某一网站上存储的私密的资源（如照片，视频，联系人列表），而" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jeffmingup.github.io/blog/post/oauth2/" />
+<meta property="article:published_time" content="2021-09-15T10:25:53+08:00" />
+<meta property="article:modified_time" content="2021-09-15T10:25:53+08:00" />
+<meta itemprop="name" content="OAuth2授权框架">
+<meta itemprop="description" content="1.前言 OAuth2 是一个授权框架，或称授权标准。简单解释：允许用户让第三方应用访问该用户在某一网站上存储的私密的资源（如照片，视频，联系人列表），而">
+<meta itemprop="datePublished" content="2021-09-15T10:25:53&#43;08:00" />
+<meta itemprop="dateModified" content="2021-09-15T10:25:53&#43;08:00" />
+<meta itemprop="wordCount" content="4325">
+
+
+
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="OAuth2授权框架"/>
+<meta name="twitter:description" content="1.前言 OAuth2 是一个授权框架，或称授权标准。简单解释：允许用户让第三方应用访问该用户在某一网站上存储的私密的资源（如照片，视频，联系人列表），而"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="https://jeffmingup.github.io/blog/" class="logo">Ming</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="https://jeffmingup.github.io/blog/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="https://jeffmingup.github.io/blog/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="https://jeffmingup.github.io/blog/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="https://jeffmingup.github.io/blog/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="https://jeffmingup.github.io/blog/" class="logo">Ming</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="https://jeffmingup.github.io/blog/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="https://jeffmingup.github.io/blog/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="https://jeffmingup.github.io/blog/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="https://jeffmingup.github.io/blog/categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">OAuth2授权框架</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2021-09-15 </span>
+        
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#1前言">1.前言</a></li>
+        <li><a href="#2oauth2角色">2.OAuth2角色</a>
+          <ul>
+            <li><a href="#资源所有者resource-owner">资源所有者（Resource Owner）</a></li>
+            <li><a href="#资源授权服务器resourceauthorization-server">资源/授权服务器（Resource/Authorization Server）</a></li>
+            <li><a href="#客户端client">客户端（Client）</a></li>
+          </ul>
+        </li>
+        <li><a href="#3oauth-2-的授权流程">3.OAuth 2 的授权流程</a></li>
+        <li><a href="#4客户端应用注册">4.客户端应用注册</a>
+          <ul>
+            <li><a href="#31lient-id-和-client-secret">3.1lient ID 和 Client Secret</a></li>
+          </ul>
+        </li>
+        <li><a href="#5授权许可authorization-grant">5.授权许可（Authorization Grant）</a>
+          <ul>
+            <li><a href="#51-authorization-code-flow">5.1 Authorization Code Flow</a></li>
+            <li><a href="#52-implicit-flow">5.2 Implicit Flow</a></li>
+            <li><a href="#53-resource-owner-password-credentials-flow">5.3 Resource Owner Password Credentials Flow</a></li>
+            <li><a href="#54-client-credentials-flow">5.4 Client Credentials Flow</a></li>
+          </ul>
+        </li>
+        <li><a href="#参考资料及文献">参考资料及文献</a></li>
+        <li><a href="#名词中英文对照">名词中英文对照</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="1前言">1.前言</h2>
+<p>OAuth2 是一个授权框架，或称授权标准。简单解释：允许用户让第三方应用访问该用户在某一网站上存储的私密的资源（如照片，视频，联系人列表），而无需将用户名和密码提供给第三方应用。</p>
+<p>1.1应用场景</p>
+<p>现在用户都很懒，注册论坛的时候需要填写一大堆个人信息都嫌麻烦，所以现在很多论坛都对接了微信登录，只要点击微信登录并授权之后，论坛就可以使用微信中的用户信息（比如手机号，头像，昵称等）来注册论坛了。这种操作的背后就是OAuth2。</p>
+<p>大致流程就是用户登录微信，并授权给论坛网站权限，使论坛可以获取用户微信的一些个人信息（手机号，头像，昵称等）。</p>
+<h2 id="2oauth2角色">2.OAuth2角色</h2>
+<p>OAuth 2 标准中定义了以下几种角色</p>
+<ul>
+<li>
+<p>资源所有者（Resource Owner）</p>
+</li>
+<li>
+<p>资源服务器（Resource Server）</p>
+</li>
+<li>
+<p>授权服务器（Authorization Server）</p>
+</li>
+<li>
+<p>客户端（Client）</p>
+</li>
+</ul>
+<h3 id="资源所有者resource-owner">资源所有者（Resource Owner）</h3>
+<p>在 OAuth 2 标准中，资源所有者即代表授权客户端访问本身资源信息的用户（User），也就是应用场景中的“用户”。客户端访问资源服务器的权限仅限于用户授权的“范围”（aka. scope，例如读取或写入权限）。</p>
+<h3 id="资源授权服务器resourceauthorization-server">资源/授权服务器（Resource/Authorization Server）</h3>
+<p>资源服务器托管了受保护的用户资源信息，而授权服务器验证用户身份然后为客户端派发资源访问令牌。</p>
+<p>在上述应用场景中，微信既是授权服务器也是资源服务器，个人信息即为资源（Resource）。而在实际工程中，不同的服务器应用往往独立部署，协同保护用户账户信息资源。</p>
+<h3 id="客户端client">客户端（Client）</h3>
+<p>在 OAuth2 中，客户端即代表意图访问受限资源的第三方应用。在访问实现之前，它必须先经过用户者授权，并且获得的授权凭证将进一步由授权服务器进行验证。</p>
+<p>在上述应用场景中，论坛网站就是客户端。</p>
+<!--如果没有特别说明，下文中将不对"应用"，“第三方应用”，“客户端”做出区分。这些都指Client-->
+<h2 id="3oauth-2-的授权流程">3.OAuth 2 的授权流程</h2>
+<p><img src="https://raw.githubusercontent.com/jeffmingup/image/master/img/202109151626306.png" alt="img"  /></p>
+<ol>
+<li>Authrization Request
+客户端向用户请求对资源服务器的<code>authorization grant</code>。</li>
+<li>Authorization Grant（Get）
+如果用户授权该次请求，客户端将收到一个<code>authorization grant</code>。</li>
+<li>Authorization Grant（Post）
+客户端向授权服务器发送它自己的客户端身份标识和上一步中的<code>authorization grant</code>，请求访问令牌。</li>
+<li>Access Token（Get）
+如果客户端身份被认证，并且<code>authorization grant</code>也被验证通过，授权服务器将为客户端派发<code>access token</code>。授权阶段至此全部结束。</li>
+<li>Access Token（Post &amp;&amp; Validate）
+客户端向资源服务器发送<code>access token</code>用于验证并请求资源信息。</li>
+<li>Protected Resource（Get）
+如果<code>access token</code>验证通过，资源服务器将向客户端返回资源信息。</li>
+</ol>
+<h2 id="4客户端应用注册">4.客户端应用注册</h2>
+<p>在应用 OAuth 2 之前，你必须在授权方服务中注册你的应用。如 <a href="https://developers.google.com/identity/">Google Identity Platform</a> 或者 <a href="https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/">Github OAuth Setting</a>，诸如此类 OAuth 实现平台中一般都要求开发者提供如下所示的授权设置项。</p>
+<ul>
+<li>应用名称</li>
+<li>应用网站</li>
+<li>重定向URI或回调URL</li>
+</ul>
+<p>重定向URI是授权方服务在用户授权（或拒绝）应用程序之后重定向供用户访问的地址，因此也是用于处理授权码或访问令牌的应用程序的一部分。</p>
+<h3 id="31lient-id-和-client-secret">3.1lient ID 和 Client Secret</h3>
+<p>一旦你的应用注册成功，授权方服务将以<code>client id</code>和<code>client secret</code>的形式为应用发布<code>client credentials</code>（客户端凭证）。<code>client id</code>是公开透明的字符串，授权方服务使用该字符串来标识应用程序，并且还用于构建呈现给用户的授权 url 。当应用请求访问用户的帐户时，<code>client secret</code>用于验证应用身份，并且必须在客户端和服务之间保持私有性。</p>
+<h2 id="5授权许可authorization-grant">5.授权许可（Authorization Grant）</h2>
+<p>如上文的抽象授权流程图所示，前四个阶段包含了获取<code>authorization grant</code>和<code>access token</code>的动作。授权许可类型取决于应用请求授权的方式和授权方服务支持的 Grant Type。OAuth 2 定义了四种 Grant Type，每一种都有适用的应用场景。</p>
+<ul>
+<li>Authorization Code
+结合普通服务器端应用使用。</li>
+<li>Implicit
+结合移动应用或 Web App 使用。</li>
+<li>Resource Owner Password Credentials
+适用于受信任客户端应用，例如同个组织的内部或外部应用。</li>
+<li>Client Credentials
+适用于客户端调用主服务API型应用（比如百度API Store）</li>
+</ul>
+<p>以下将分别介绍这四种许可类型的相关授权流程。</p>
+<h3 id="51-authorization-code-flow">5.1 Authorization Code Flow</h3>
+<p><code>Authorization Code</code> 是最常使用的一种授权许可类型，它适用于第三方应用类型为<code>server-side</code>型应用的场景。<code>Authorization Code</code>授权流程基于重定向跳转，客户端必须能够与<code>User-agent</code>（即用户的 Web 浏览器）交互并接收通过<code>User-agent</code>路由发送的实际<code>authorization code</code>值。</p>
+<p><img src="https://raw.githubusercontent.com/jeffmingup/image/master/img/202109151631129.png" alt="img"  /></p>
+<h4 id="user-authorization-request">User Authorization Request</h4>
+<p>首先，客户端构造了一个用于请求<code>authorization code</code>的URL并引导<code>User-agent</code>跳转访问。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">https://authorization-server.com/auth
+ ?response_type=code
+ &amp;client_id=29352915982374239857
+ &amp;redirect_uri=https%3A%2F%2Fexample-client.com%2Fcallback
+ &amp;scope=create+delete
+ &amp;state=xcoiv98y2kd22vusuye3kch
+</code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>response_type=code
+此参数和参数值用于提示授权服务器当前客户端正在进行<code>Authorization Code</code>授权流程。</li>
+<li>client_id
+客户端身份标识。</li>
+<li>redirect_uri
+标识授权服务器接收客户端请求后返回给<code>User-agent</code>的跳转访问地址。</li>
+<li>scope
+指定客户端请求的访问级别。</li>
+<li>state
+由客户端生成的随机字符串，步骤2中用户进行授权客户端的请求时也会携带此字符串用于比较，这是为了防止<code>CSRF</code>攻击。</li>
+</ul>
+<h4 id="2-user-authorizes-applcation">2. User Authorizes Applcation</h4>
+<p>当用户点击上文中的示例链接时，用户必须已经在授权服务中进行登录（否则将会跳转到登录界面，<strong>不过 OAuth 2 并不关心认证过程</strong>），然后授权服务会提示用户授权或拒绝应用程序访问其帐户。以下是授权应用程序的示例：</p>
+<p><img src="https://raw.githubusercontent.com/jeffmingup/image/master/img/202109151634688.png" alt="img"></p>
+<h4 id="3-authorization-code-grant">3. Authorization Code Grant</h4>
+<p>如果用户确认授权，授权服务器将重定向<code>User-agent</code>至之前客户端提供的指向客户端的<code>redirect_uri</code>地址，并附带<code>code</code>和<code>state</code>参数（由之前客户端提供），于是客户端便能直接读取到<code>authorization code</code>值。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">https://example-client.com/redirect
+ ?code=g0ZGZmNjVmOWIjNTk2NTk4ZTYyZGI3
+ &amp;state=xcoiv98y2kd22vusuye3kch
+</code></pre></td></tr></table>
+</div>
+</div><p><code>state</code>值将与客户端在请求中最初设置的值相同。客户端将检查重定向中的状态值是否与最初设置的状态值相匹配。这可以防止CSRF和其他相关攻击。</p>
+<p><code>code</code>是授权服务器生成的<code>authorization code</code>值。<code>code</code>相对较短，通常持续1到10分钟，具体取决于授权服务器设置。</p>
+<h4 id="4-access-token-request">4. Access Token Request</h4>
+<p>现在客户端已经拥有了服务器派发的<code>authorization code</code>，接下来便可以使用<code>authorization code</code>和其他参数向服务器请求<code>access token</code>（POST方式）。其他相关参数如下：</p>
+<ul>
+<li>grant_type=authorization_code - 这告诉服务器当前客户端正在使用<code>Authorization Code</code>授权流程。</li>
+<li>code - 应用程序包含它在重定向中给出的授权码。</li>
+<li>redirect_uri - 与请求<code>authorization code</code>时使用的<code>redirect_uri</code>相同。某些资源（API）不需要此参数。</li>
+<li>client_id - 客户端标识。</li>
+<li>client_secret - 应用程序的客户端密钥。这确保了获取<code>access token</code>的请求只能从客户端发出，而不能从可能截获<code>authorization code</code>的攻击者发出。</li>
+</ul>
+<h4 id="5-access-token-grant">5. Access Token Grant</h4>
+<p>服务器将会验证第4步中的请求参数，当验证通过后（校验<code>authorization code</code>是否过期，<code>client id</code>和<code>client secret</code>是否匹配等），服务器将向客户端返回<code>access token</code>。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">{
+  &#34;access_token&#34;:&#34;MTQ0NjJkZmQ5OTM2NDE1ZTZjNGZmZjI3&#34;,
+  &#34;token_type&#34;:&#34;bearer&#34;,
+  &#34;expires_in&#34;:3600,
+  &#34;refresh_token&#34;:&#34;IwOGYzYTlmM2YxOTQ5MGE3YmNmMDFkNTVk&#34;,
+  &#34;scope&#34;:&#34;create delete&#34;
+}
+</code></pre></td></tr></table>
+</div>
+</div><p>至此，授权流程全部结束。直到<code>access token</code> 过期或失效之前，客户端可以通过资源服务器API访问用户的帐户，并具备<code>scope</code>中给定的操作权限。</p>
+<h3 id="52-implicit-flow">5.2 Implicit Flow</h3>
+<p><code>Implicit</code>授权流程和<code>Authorization Code</code>基于重定向跳转的授权流程十分相似，但它适用于移动应用和 Web App，这些应用与普通服务器端应用相比有个特点，即<code>client secret</code>不能有效保存和信任。</p>
+<p>相比<code>Authorization Code</code>授权流程，<code>Implicit</code>去除了请求和获得<code>authorization code</code>的过程，而用户点击授权后，授权服务器也会直接把<code>access token</code>放在<code>redirect_uri</code>中发送给<code>User-agent</code>（浏览器）。 同时第1步构造请求用户授权 url 中的<code>response_type</code>参数值也由 <em>code</em> 更改为 <em>token</em> 或 <em>id_token</em> 。</p>
+<p><img src="https://raw.githubusercontent.com/jeffmingup/image/master/img/202109151634807.png" alt="img"></p>
+<h4 id="1-user-authorization-request">1. User Authorization Request</h4>
+<p>客户端构造的URL如下所示：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">https://{yourOktaDomain}.com/oauth2/default/v1/authorize?client_id=0oabv6kx4qq6
+h1U5l0h7&amp;response_type=token&amp;redirect_uri=http%3A%2F%2Flocalhost%3
+A8080&amp;state=state-296bc9a0-a2a2-4a57-be1a-d0e2fd9bb601&amp;nonce=foo&#39;
+</code></pre></td></tr></table>
+</div>
+</div><p><em>response_type</em>的<code>response_type</code>参数值为 <em>token</em> 或 <em>id_token</em> 。其他请求参数与<code>Authorization Code</code>授权流程相比没有并什么变化。</p>
+<h4 id="2-user-authorizes-application略">2. User Authorizes Application（略）</h4>
+<h4 id="3-redirect-uri-with-access-token-in-fragment">3. Redirect URI With Access Token In Fragment</h4>
+<p>假设用户授予访问权限，授权服务器将<code>User-agent</code>（浏览器） 重定向回客户端使用之前提供的<code>redirect_uri</code>。并在 uri 的 #fragment 部分添加<code>access_token</code>键值对。如下所示：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">http://localhost:8080/#access_token=eyJhb[...]erw&amp;token_type=Bearer&amp;expires_in=3600&amp;scope=openid&amp;state=state-296bc9a0-a2a2-4a57-be1a-d0e2fd9bb601
+</code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>token_type - 当且仅当<code>response_type</code>设置为 <em>token</em> 时返回，值恒为 <em>Bearer</em>。</li>
+</ul>
+<blockquote>
+<p>注意在<code>Implicit</code>流程中，<code>access_token</code>值放在了 URI 的 #fragment 部分，而不是作为 ?query 参数。</p>
+</blockquote>
+<h4 id="4-user-agent-follows-the-redirect-uri">4. User-agent Follows the Redirect URI</h4>
+<p><code>User-agent</code>（浏览器）遵循重定向指令，请求<code>redirect_uri</code>标识的客户端地址，<strong>并在本地保留 uri 的 #fragment 部分的<code>access_token</code>信息</strong>。</p>
+<h4 id="5-application-sends-access-token-extraction-script">5. Application Sends Access Token Extraction Script</h4>
+<p>客户端生成一个包含 token 解构脚本的 Html 页面，这个页面被发送给<code>User-agent</code>（浏览器），执行脚本解构完整的<code>redirect_uri</code>并提取其中的<code>access_token</code>（<code>access token</code>信息在第4步中已经被<code>User-agent</code>保存）。</p>
+<h4 id="6-access-token-passed-to-application">6. Access Token Passed to Application</h4>
+<p><code>User-agent</code>（浏览器）向客户端发送解构提取的<code>access token</code>。</p>
+<p>至此，授权流程全部结束。直到<code>access token</code> 过期或失效之前，客户端可以通过资源服务器API访问用户的帐户，并具备<code>scope</code>中给定的操作权限。</p>
+<h3 id="53-resource-owner-password-credentials-flow">5.3 Resource Owner Password Credentials Flow</h3>
+<p><code>Resource Owner Password Credentials</code>授权流程适用于用户与客户端具有信任关系的情况，例如设备操作系统或同一组织的内部及外部应用。用户与应用交互表现形式往往体现为客户端能够直接获取用户凭据（用户名和密码，通常使用交互表单）。</p>
+<p><img src="https://raw.githubusercontent.com/jeffmingup/image/master/img/202109151634800.png" alt="img"></p>
+<h4 id="1-resource-owner-password-credentials-from-user-input">1. Resource Owner Password Credentials From User Input</h4>
+<p>用户向客户端提供用户名与密码作为授权凭据。</p>
+<h4 id="2-resource-owner-password-credentials-from-client-to-server">2. Resource Owner Password Credentials From Client To Server</h4>
+<p>客户端向授权服务器发送用户输入的授权凭据以请求 <code>access token</code>。客户端必须已经在服务器端进行注册。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">POST /token HTTP/1.1
+Host: server.example.com
+Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=password&amp;username=johndoe&amp;password=A3ddj3w
+</code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>grant_type - 必选项，值恒为 <em>password</em></li>
+</ul>
+<h4 id="3-access-token-passed-to-application">3. Access Token Passed to Application</h4>
+<p>授权服务器对客户端进行认证并检验用户凭据的合法性，如果检验通过，将向客户端派发 <code>access token</code>&gt;</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">{
+  &#34;access_token&#34;:&#34;2YotnFZFEjr1zCsicMWpAA&#34;,
+  &#34;token_type&#34;:&#34;example&#34;,
+  &#34;expires_in&#34;:3600,
+  &#34;refresh_token&#34;:&#34;tGzv3JOkF0XG5Qx2TlKWIA&#34;,
+  &#34;example_parameter&#34;:&#34;example_value&#34;
+}
+</code></pre></td></tr></table>
+</div>
+</div><h3 id="54-client-credentials-flow">5.4 Client Credentials Flow</h3>
+<p><code>Client Credential</code>是最简单的一种授权流程。客户端可以直接使用它的<code>client credentials</code>或其他有效认证信息向授权服务器发起获取<code>access token</code>的请求。</p>
+<p><img src="https://raw.githubusercontent.com/jeffmingup/image/master/img/202109151634785.png" alt="img"></p>
+<p>两步中的请求体和返回体分别如下：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">POST /token HTTP/1.1
+Host: server.example.com
+Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+</code></pre></td></tr></table>
+</div>
+</div><ul>
+<li>grant_type - 必选项，值恒为 <em>client_credentials</em></li>
+</ul>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-fallback" data-lang="fallback">{
+       &#34;access_token&#34;:&#34;2YotnFZFEjr1zCsicMWpAA&#34;,
+       &#34;token_type&#34;:&#34;example&#34;,
+       &#34;expires_in&#34;:3600,
+       &#34;example_parameter&#34;:&#34;example_value&#34;
+}
+</code></pre></td></tr></table>
+</div>
+</div><h2 id="参考资料及文献">参考资料及文献</h2>
+<ol>
+<li><a href="https://www.cnblogs.com/Wddpct/p/8976480.html">OAuth2深入介绍</a></li>
+<li><a href="https://github.com/jeansfish/RFC6749.zh-cn">RFC 6749-OAuth 2.0授权框架简体中文翻译</a></li>
+</ol>
+<h2 id="名词中英文对照">名词中英文对照</h2>
+<table>
+<thead>
+<tr>
+<th>英文</th>
+<th>中文</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Authorization Grant</td>
+<td>授权许可</td>
+</tr>
+<tr>
+<td>Authorization Code</td>
+<td>授权码</td>
+</tr>
+<tr>
+<td>Access Token</td>
+<td>访问令牌</td>
+</tr>
+<tr>
+<td>Authorization</td>
+<td>授权</td>
+</tr>
+<tr>
+<td>Authentication</td>
+<td>认证</td>
+</tr>
+</tbody>
+</table>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">王明</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2021-09-15
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        
+        <a class="next" href="https://jeffmingup.github.io/blog/post/proxy/">
+            <span class="next-text nav-default">docker容器内部使用代理</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        <div id="gitalk-container"></div>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+      var gitalk = new Gitalk({
+        id: '2021-09-15 10:25:53 \x2b0800 CST',
+        title: 'OAuth2授权框架',
+        clientID: '594c5d359f317c8119dc',
+        clientSecret: '808944f21937c3b85840b3b3d119d7e6e4a104d3',
+        repo: 'blog',
+        owner: 'jeffmingup',
+        admin: ['jeffmingup'],
+        body: decodeURI(location.href)
+      });
+      gitalk.render('gitalk-container');
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/gitalk/gitalk">comments powered by gitalk.</a></noscript>
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:1920588251@qq.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/jeffmingup" class="iconfont icon-github" title="github"></a>
+  <a href="https://jeffmingup.github.io/blog/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2020 - 
+    2021
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">王明</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="https://jeffmingup.github.io/blog/js/main.min.d7b7ada643c9c1a983026e177f141f7363b4640d619caf01d8831a6718cd44ea.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
