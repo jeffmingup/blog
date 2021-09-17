@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>分布式锁理解及etcd实现方案 - 王明的博客</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="王明" /><meta name="description" content="分布式锁基础 分布式锁，是控制分布式系统之间同步访问共享资源的一种方式。在分布式系统中，常常需要协调他们的动作。如果不同的系统或是同一个系统的" /><meta name="keywords" content="王明, 博客, blog" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.70.0 with theme even" />
+
+
+<link rel="canonical" href="https://jeffmingup.github.io/blog/post/etcd/" />
+<link rel="apple-touch-icon" sizes="180x180" href="https://jeffmingup.github.io/blog/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://jeffmingup.github.io/blog/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://jeffmingup.github.io/blog/favicon-16x16.png">
+<link rel="manifest" href="https://jeffmingup.github.io/blog/manifest.json">
+<link rel="mask-icon" href="https://jeffmingup.github.io/blog/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="https://jeffmingup.github.io/blog/sass/main.min.651e6917abb0239242daa570c2bec9867267bbcd83646da5a850afe573347b44.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="分布式锁理解及etcd实现方案" />
+<meta property="og:description" content="分布式锁基础 分布式锁，是控制分布式系统之间同步访问共享资源的一种方式。在分布式系统中，常常需要协调他们的动作。如果不同的系统或是同一个系统的" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jeffmingup.github.io/blog/post/etcd/" />
+<meta property="article:published_time" content="2021-09-17T15:56:49+08:00" />
+<meta property="article:modified_time" content="2021-09-17T15:56:49+08:00" />
+<meta itemprop="name" content="分布式锁理解及etcd实现方案">
+<meta itemprop="description" content="分布式锁基础 分布式锁，是控制分布式系统之间同步访问共享资源的一种方式。在分布式系统中，常常需要协调他们的动作。如果不同的系统或是同一个系统的">
+<meta itemprop="datePublished" content="2021-09-17T15:56:49&#43;08:00" />
+<meta itemprop="dateModified" content="2021-09-17T15:56:49&#43;08:00" />
+<meta itemprop="wordCount" content="4811">
+
+
+
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="分布式锁理解及etcd实现方案"/>
+<meta name="twitter:description" content="分布式锁基础 分布式锁，是控制分布式系统之间同步访问共享资源的一种方式。在分布式系统中，常常需要协调他们的动作。如果不同的系统或是同一个系统的"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="https://jeffmingup.github.io/blog/" class="logo">Ming</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="https://jeffmingup.github.io/blog/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="https://jeffmingup.github.io/blog/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="https://jeffmingup.github.io/blog/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="https://jeffmingup.github.io/blog/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="https://jeffmingup.github.io/blog/" class="logo">Ming</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="https://jeffmingup.github.io/blog/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="https://jeffmingup.github.io/blog/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="https://jeffmingup.github.io/blog/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="https://jeffmingup.github.io/blog/categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">分布式锁理解及etcd实现方案</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2021-09-17 </span>
+        
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#分布式锁基础">分布式锁基础</a>
+          <ul>
+            <li><a href="#分布式锁应该具备一下特点">分布式锁应该具备一下特点：</a></li>
+            <li><a href="#--互斥性--"><!--互斥性--></a></li>
+            <li><a href="#--安全性--"><!--安全性--></a></li>
+            <li><a href="#--可用性--"><!--可用性--></a></li>
+            <li><a href="#--对称性--"><!--对称性--></a></li>
+          </ul>
+        </li>
+        <li><a href="#redis分布式锁">Redis分布式锁</a>
+          <ul>
+            <li><a href="#set命令">SET命令</a></li>
+            <li><a href="#实现流程">实现流程</a></li>
+            <li><a href="#redis分布式锁的问题">redis分布式锁的问题</a></li>
+          </ul>
+        </li>
+        <li><a href="#etcd-特性">Etcd 特性</a></li>
+        <li><a href="#etcd分布式锁官方concurrency-包分析">Etcd分布式锁，官方Concurrency 包分析</a></li>
+        <li><a href="#总结下-etcd-分布式锁的步骤">总结下 Etcd 分布式锁的步骤</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <h2 id="分布式锁基础">分布式锁基础</h2>
+<p>分布式锁，是控制分布式系统之间同步访问共享资源的一种方式。在分布式系统中，常常需要协调他们的动作。如果不同的系统或是同一个系统的不同主机之间共享了一个或一组资源，那么访问这些资源的时候，往往需要互斥来防止彼此干扰来保证一致性，在这种情况下，便需要使用到分布式锁。</p>
+<h3 id="分布式锁应该具备一下特点">分布式锁应该具备一下特点：</h3>
+<ul>
+<li>互斥性：任意时刻，同一个锁，只有一个进程能持有</li>
+<li>安全性：避免死锁，当进程没有主动释放锁（进程崩溃退出），保证其他进程能够加锁</li>
+<li>可用性：当提供锁的服务节点故障（宕机）时，热备节点能够接替故障的节点继续提供服务，并保证自身持有的数据与故障节点一致</li>
+<li>对称性：对同一个锁，加锁和解锁必须是同一个进程，即某进程不能把其他进程持有的锁给释放了</li>
+</ul>
+<h3 id="--互斥性--"><!--互斥性--></h3>
+<!--这个没啥好说的，要满足这个特性，一般是多进程共同使用同一个分布式锁服务来管理。-->
+<h3 id="--安全性--"><!--安全性--></h3>
+<!--要满足进程崩溃之后，不会出现死锁，就需要给锁加上过期时间。进程崩溃了，锁过期依然会释放。如果出现进程还没处理完，锁就过期了也不行，所以需要守护进程来定时续约过期时间。-->
+<h3 id="--可用性--"><!--可用性--></h3>
+<!--这个需要锁服务本身是高可用，像redis主从，etcd（本身就是高可用）-->
+<h3 id="--对称性--"><!--对称性--></h3>
+<!--redis处理这个问题的方案是给key分配一个唯一值value，解锁的时候通过lua脚本来判断是不是自己的锁（自己设置的key-value）。-->
+<!--etcd是根据key前缀的方式，具体方案看下方，也不会出现这个问题-->
+<h2 id="redis分布式锁">Redis分布式锁</h2>
+<h3 id="set命令">SET命令</h3>
+<ul>
+<li>
+<p>EX seconds ： 将键的过期时间设置为 seconds 秒。 执行 SET key value EX seconds 的效果等同于执行 SETEX key seconds value 。</p>
+</li>
+<li>
+<p>PX milliseconds ： 将键的过期时间设置为 milliseconds 毫秒。 执行 SET key value PX milliseconds 的效果等同于执行 PSETEX key milliseconds value 。</p>
+</li>
+<li>
+<p>NX ： 只在键不存在时， 才对键进行设置操作。 执行 SET key value NX 的效果等同于执行 SETNX key value 。</p>
+</li>
+<li>
+<p>XX ： 只在键已经存在时， 才对键进行设置操作。</p>
+</li>
+</ul>
+<h3 id="实现流程">实现流程</h3>
+<p>redis实现加锁的大致流程就是，使用NX参数多个进程设置同一个key，谁设置成功谁获得锁。</p>
+<p>安全性靠过期时间来解决，为了加锁操作的原子性，需要使用set 命令同时加上NX和 EX（过期时间）参数。如果出现进程还没处理完，锁就过期了也不行，所以需要守护进程来定时续约过期时间。</p>
+<p>对称性的话，每个进程为key设置一个value(唯一值)。解锁的时候通过lua脚本，先get出value和当前进程做对比，确认一致后才解锁。</p>
+<h3 id="redis分布式锁的问题">redis分布式锁的问题</h3>
+<p>其实就是可用性和一致性问题，redis基于内存通常用作缓存服务器，读写性能很高。但是redis的高可用不能保证完全一致性。</p>
+<p>比如当前进程刚设置一个锁（set命令），这条set命令还没有同步到redis从服务器上，然后redis主服务器挂了。在redis从服务器升级为主服务器的之后没有这条set命令。就会有别的进程重复获得锁，这样就有问题了。</p>
+<p>网上似乎也有一些方案，但是redis本身的一致性并不是它的强项，读写性能高才是。所以类似etcd这种本身就是分布式并具备一致性的服务就成了分布式锁的最佳方案。</p>
+<h2 id="etcd-特性">Etcd 特性</h2>
+<p>这些年，随着 <a href="https://raft.github.io/">Raft 协议</a> 的广泛应用，涌现出很多的基于此协议实现的高可用分布式系统，比较知名的有 <a href="https://github.com/etcd-io/etcd">Etcd</a>、<a href="https://github.com/hashicorp/consul">Consul</a> 等，由于其内部实现了 <a href="https://zh.wikipedia.org/wiki/CAP%E5%AE%9A%E7%90%86">分布式一致性</a>，所以非常适合做分布式锁。本片文章就以 Etcd 为例，来介绍下构建分布式锁的方法。值得注意的是，Etcd 分布式锁的实现是在客户端做的。</p>
+<p>Etcd 支持以下功能，正是依赖这些功能来实现分布式锁的：</p>
+<ul>
+<li>Lease 机制：即租约机制（TTL，Time To Live），Etcd 可以为存储的 Key-Value 对设置租约，当租约到期，Key-Value 将失效删除；同时也支持续约续期（KeepAlive）</li>
+<li>Revision 机制:  Etcd有个全局的Revision值，Etcd 每进行一次事务对应的全局 Revision 值都会加一 。每个 key 带有一个 CreateRevision属性值就是创建key的时候的全局Revision值，还有对应的ModRevision(修改时候的全局Revision值 )。因此每个 Key 对应的 CreateRevision（ModRevision）属性值都是全局唯一的。(还有一个Version对应当前key的共修改了几次，put相同的值也算修改)。通过比较 CreateRevision的大小就可以知道进行写操作的顺序。在实现分布式锁时，多个程序同时抢锁，根据 CreateRevision值大小依次获得锁，可以避免惊群效应，实现公平锁。</li>
+<li>Prefix 机制：即前缀机制（或目录机制）。可以根据前缀（目录）获取该目录下所有的 Key 及对应的属性（包括 Key、Value 以及 Revision 等）</li>
+<li>Watch 机制：即监听机制，Watch 机制支持 Watch 某个固定的 Key，也支持 Watch 一个目录前缀（前缀机制），当被 Watch 的 Key 或目录发生变化，客户端将收到通知</li>
+</ul>
+<h2 id="etcd分布式锁官方concurrency-包分析">Etcd分布式锁，官方Concurrency 包分析</h2>
+<p><a href="https://github.com/etcd-io/etcd/tree/main/client/v3/concurrency">https://github.com/etcd-io/etcd/tree/main/client/v3/concurrency</a></p>
+<p>EtcdV3 版本的 Concurrency 包 提供了实现 分布式锁 及 分布式选主 的接口，这两个概念间是有共性的，譬如，谁抢到了锁谁就是 Master。这次主要说分布式锁，下面是锁的几个方法</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">Mutex</span>
+	<span class="kd">func</span> <span class="nf">NewMutex</span><span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">Session</span><span class="p">,</span> <span class="nx">pfx</span> <span class="kt">string</span><span class="p">)</span> <span class="o">*</span><span class="nx">Mutex</span>
+	<span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Mutex</span><span class="p">)</span> <span class="nf">Header</span><span class="p">()</span> <span class="o">*</span><span class="nx">pb</span><span class="p">.</span><span class="nx">ResponseHeader</span>
+	<span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Mutex</span><span class="p">)</span> <span class="nf">IsOwner</span><span class="p">()</span> <span class="nx">v3</span><span class="p">.</span><span class="nx">Cmp</span>
+	<span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Mutex</span><span class="p">)</span> <span class="nf">Key</span><span class="p">()</span> <span class="kt">string</span>
+	<span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Mutex</span><span class="p">)</span> <span class="nf">Lock</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="kt">error</span>
+	<span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Mutex</span><span class="p">)</span> <span class="nf">TryLock</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="kt">error</span>
+	<span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Mutex</span><span class="p">)</span> <span class="nf">Unlock</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="kt">error</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>先看一下Mutex结构体</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span><span class="lnt">7
+</span><span class="lnt">8
+</span><span class="lnt">9
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Mutex implements the sync Locker interface with etcd
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">Mutex</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">s</span> <span class="o">*</span><span class="nx">Session</span> <span class="c1">//每个进程使用分布式锁的时候，都会和etcd建立一个连接，session就是这次连接的指针
+</span><span class="c1"></span>
+	<span class="nx">pfx</span>   <span class="kt">string</span> <span class="c1">// 锁的共同前缀 pfx，如 &#34;/service/lock/&#34;
+</span><span class="c1"></span>	<span class="nx">myKey</span> <span class="kt">string</span> <span class="c1">// 当前持有锁的客户端的 key 值（完整 Key 的组成为 pfx+&#34;/&#34;+leaseid）
+</span><span class="c1"></span>	<span class="nx">myRev</span> <span class="kt">int64</span>  <span class="c1">// 当前持有锁的 CreateRevision 
+</span><span class="c1"></span>	<span class="nx">hdr</span>   <span class="o">*</span><span class="nx">pb</span><span class="p">.</span><span class="nx">ResponseHeader</span> <span class="c1">// 当前put/get命令响应值
+</span><span class="c1"></span><span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>初始化 Mutex，可以看到在 NewMutex 方法中，并非直接拿传进来的 pfx 作为 Prefix 的，而且在后面加了个 /，在 Etcd 开发项目中，定义或查找 Prefix 或 Suffix 时都建议加上分隔符 /，这是个好习惯，也可以避免出现问题。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="nf">NewMutex</span><span class="p">(</span><span class="nx">s</span> <span class="o">*</span><span class="nx">Session</span><span class="p">,</span> <span class="nx">pfx</span> <span class="kt">string</span><span class="p">)</span> <span class="o">*</span><span class="nx">Mutex</span> <span class="p">{</span>
+   <span class="c1">//Etcd 这里默认将 / path 的 key 结构转换为一个目录结构 /path/
+</span><span class="c1"></span>   <span class="k">return</span> <span class="o">&amp;</span><span class="nx">Mutex</span><span class="p">{</span><span class="nx">s</span><span class="p">,</span> <span class="nx">pfx</span> <span class="o">+</span> <span class="s">&#34;/&#34;</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">nil</span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>然后看主要的Lock(),TryLock()方法，</p>
+<p>这两个方法的区别：Lock()是阻塞等待的，会一直阻塞到获取锁；TryLock()则是立即返回，锁被占用的时候返回ErrLocked</p>
+<p>这两个方法都是先调用了tryAcquire()方法</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Mutex</span><span class="p">)</span> <span class="nf">tryAcquire</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">v3</span><span class="p">.</span><span class="nx">TxnResponse</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">s</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">s</span>
+	<span class="nx">client</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">s</span><span class="p">.</span><span class="nf">Client</span><span class="p">()</span>
+	<span class="c1">// 下面的 m.pfx 就是 prefix，是传进来的前缀，后面的 s.Lease() 会返回一个租约，是一个 int64 的整数，和 session 有关系
+</span><span class="c1"></span>	<span class="c1">//mykex 先理解为是 / prefix/leaseid 这样的结构
+</span><span class="c1"></span>	<span class="nx">m</span><span class="p">.</span><span class="nx">myKey</span> <span class="p">=</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Sprintf</span><span class="p">(</span><span class="s">&#34;%s%x&#34;</span><span class="p">,</span> <span class="nx">m</span><span class="p">.</span><span class="nx">pfx</span><span class="p">,</span> <span class="nx">s</span><span class="p">.</span><span class="nf">Lease</span><span class="p">())</span>
+  	<span class="cm">/* 这里定义一个 cmp 方法，
+</span><span class="cm">  	比较上面 m.myKey 的 CreateRevision 是否为 0 等于 0 表示目前不存在该 key，
+</span><span class="cm">  	需要执行 Put 操作 不等于 0 表示对应的 key 已经创建了，需要执行 Get 操作 。
+</span><span class="cm">  	
+</span><span class="cm">  	简单理解就是，看这个key是否已经存在；如果不存在就put新建，已存在就get获取。
+</span><span class="cm">  	已经存在的情况是，一个进程中同一个session重复调用了lock()方法也没关系，这是幂等的。
+</span><span class="cm">  	*/</span>
+	<span class="nx">cmp</span> <span class="o">:=</span> <span class="nx">v3</span><span class="p">.</span><span class="nf">Compare</span><span class="p">(</span><span class="nx">v3</span><span class="p">.</span><span class="nf">CreateRevision</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">myKey</span><span class="p">),</span> <span class="s">&#34;=&#34;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+  
+  
+	<span class="c1">// put self in lock waiters via myKey; oldest waiter holds lock
+</span><span class="c1"></span>	<span class="nx">put</span> <span class="o">:=</span> <span class="nx">v3</span><span class="p">.</span><span class="nf">OpPut</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">myKey</span><span class="p">,</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="nx">v3</span><span class="p">.</span><span class="nf">WithLease</span><span class="p">(</span><span class="nx">s</span><span class="p">.</span><span class="nf">Lease</span><span class="p">()))</span>
+	<span class="c1">// reuse key in case this session already holds the lock
+</span><span class="c1"></span>	<span class="nx">get</span> <span class="o">:=</span> <span class="nx">v3</span><span class="p">.</span><span class="nf">OpGet</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">myKey</span><span class="p">)</span>
+	<span class="c1">// fetch current holder to complete uncontended path with only one RPC
+</span><span class="c1"></span>  <span class="c1">// 获取当前锁的真正持有者
+</span><span class="c1"></span>	<span class="nx">getOwner</span> <span class="o">:=</span> <span class="nx">v3</span><span class="p">.</span><span class="nf">OpGet</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">pfx</span><span class="p">,</span> <span class="nx">v3</span><span class="p">.</span><span class="nf">WithFirstCreate</span><span class="p">()</span><span class="o">...</span><span class="p">)</span>
+  <span class="c1">//Txn 事务，判断 cmp 的条件是否成立，成立执行 Then(put新建)，不成立执行 Else(获取get)，最终执行 Commit()
+</span><span class="c1"></span>	<span class="nx">resp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">client</span><span class="p">.</span><span class="nf">Txn</span><span class="p">(</span><span class="nx">ctx</span><span class="p">).</span><span class="nf">If</span><span class="p">(</span><span class="nx">cmp</span><span class="p">).</span><span class="nf">Then</span><span class="p">(</span><span class="nx">put</span><span class="p">,</span> <span class="nx">getOwner</span><span class="p">).</span><span class="nf">Else</span><span class="p">(</span><span class="nx">get</span><span class="p">,</span> <span class="nx">getOwner</span><span class="p">).</span><span class="nf">Commit</span><span class="p">()</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+	<span class="p">}</span>
+  <span class="c1">//If(cmp) 为ture,执行 Then(put,getOwner)，myRev是当前事务返回的Header.Revisions属性
+</span><span class="c1"></span>	<span class="nx">m</span><span class="p">.</span><span class="nx">myRev</span> <span class="p">=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Header</span><span class="p">.</span><span class="nx">Revision</span>
+  <span class="c1">//If(cmp) 为false, 执行 Else(get,getOwner)，myRev则是get操作返回的CreateRevision属性
+</span><span class="c1"></span>	<span class="k">if</span> <span class="p">!</span><span class="nx">resp</span><span class="p">.</span><span class="nx">Succeeded</span> <span class="p">{</span>
+    <span class="c1">//resp.Responses[0] 表示事务Then()/Else()方法中的第一个操作的响应值
+</span><span class="c1"></span>    <span class="c1">//resp.Responses[1] 表示事务Then()/Else()方法中的第二个操作的响应值
+</span><span class="c1"></span>		<span class="nx">m</span><span class="p">.</span><span class="nx">myRev</span> <span class="p">=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Responses</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nf">GetResponseRange</span><span class="p">().</span><span class="nx">Kvs</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">CreateRevision</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">resp</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>在 tryAcquire 的 TXN 事务中，不管是执行 Put 还是 Get，最终都有个 getOwner 的过程，看一下这个 getOwner 的逻辑，这里有个有趣的选项，getOwner := v3.OpGet(m.pfx, v3.WithFirstCreate()&hellip;) 中的 options 模式里有个 v3.WithFirstCreate() 函数调用，这是一个和 prefix 相关的函数，看看它的实现：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// WithFirstCreate gets the key with the oldest creation revision in the request range.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">WithFirstCreate</span><span class="p">()</span> <span class="p">[]</span><span class="nx">OpOption</span> <span class="p">{</span> <span class="k">return</span> <span class="nf">withTop</span><span class="p">(</span><span class="nx">SortByCreateRevision</span><span class="p">,</span> <span class="nx">SortAscend</span><span class="p">)</span> <span class="p">}</span>
+
+<span class="c1">// withTop gets the first key over the get&#39;s prefix given a sort order
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">withTop</span><span class="p">(</span><span class="nx">target</span> <span class="nx">SortTarget</span><span class="p">,</span> <span class="nx">order</span> <span class="nx">SortOrder</span><span class="p">)</span> <span class="p">[]</span><span class="nx">OpOption</span> <span class="p">{</span>
+   <span class="k">return</span> <span class="p">[]</span><span class="nx">OpOption</span><span class="p">{</span><span class="nf">WithPrefix</span><span class="p">(),</span> <span class="nf">WithSort</span><span class="p">(</span><span class="nx">target</span><span class="p">,</span> <span class="nx">order</span><span class="p">),</span> <span class="nf">WithLimit</span><span class="p">(</span><span class="mi">1</span><span class="p">)}</span>
+<span class="p">}</span>
+
+<span class="c1">// WithPrefix enables &#39;Get&#39;, &#39;Delete&#39;, or &#39;Watch&#39; requests to operate
+</span><span class="c1">// on the keys with matching prefix. For example, &#39;Get(foo, WithPrefix())&#39;
+</span><span class="c1">// can return &#39;foo1&#39;, &#39;foo2&#39;, and so on.
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">WithPrefix</span><span class="p">()</span> <span class="nx">OpOption</span> <span class="p">{</span>
+	<span class="c1">// 返回所有满足 prefix 匹配的 key-value，和 etcdctl get key --prefix 功能一样
+</span><span class="c1"></span>   <span class="k">return</span> <span class="kd">func</span><span class="p">(</span><span class="nx">op</span> <span class="o">*</span><span class="nx">Op</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">op</span><span class="p">.</span><span class="nx">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+         <span class="nx">op</span><span class="p">.</span><span class="nx">key</span><span class="p">,</span> <span class="nx">op</span><span class="p">.</span><span class="nx">end</span> <span class="p">=</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">{</span><span class="mi">0</span><span class="p">},</span> <span class="p">[]</span><span class="kt">byte</span><span class="p">{</span><span class="mi">0</span><span class="p">}</span>
+         <span class="k">return</span>
+      <span class="p">}</span>
+      <span class="nx">op</span><span class="p">.</span><span class="nx">end</span> <span class="p">=</span> <span class="nf">getPrefix</span><span class="p">(</span><span class="nx">op</span><span class="p">.</span><span class="nx">key</span><span class="p">)</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>看到上面的代码，WithPrefix/WithSort，所以 getOwner 的具体执行效果是会把所有有以 lockkey 开头的 Key-Value 都拿到，且按照 CreateRevision 升序排列，并取第一个值，这个意思就很明白了，就是要拿到当前以 lockkey 为 Prefix 的且 CreatereVision 最小的那个 Key，就是目前已经拿到锁的 Key;</p>
+<p>TryLock/Lock 上层调用：</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Lock locks the mutex with a cancelable context. If the context is canceled
+</span><span class="c1">// while trying to acquire the lock, the mutex tries to clean its stale lock entry.
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Mutex</span><span class="p">)</span> <span class="nf">Lock</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="c1">// 先调用 tryAcquire 尝试获取锁
+</span><span class="c1"></span>	<span class="nx">resp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">tryAcquire</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">err</span>
+	<span class="p">}</span>
+	<span class="c1">// if no key on prefix / the minimum rev is key, already hold the lock
+</span><span class="c1"></span>	<span class="nx">ownerKey</span> <span class="o">:=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Responses</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="nf">GetResponseRange</span><span class="p">().</span><span class="nx">Kvs</span>
+  <span class="c1">// 当前以 lockkey 为 Prefix下没有值，则表示当前没有人获得锁（第一次场景），这个操作有疑问，之前不是有put操作吗？一定会有值的啊，验证如果get和获取前缀是一个事务，我先get（），然后别的客户端删除，然后获取前缀能获取到吗？
+</span><span class="c1"></span>	<span class="c1">// 或者锁的 owner 的 CreateRevision 等于当前的 kv 的 Revision，
+</span><span class="c1"></span>  <span class="c1">// 表示自己是当前以 lockkey 为 Prefix 中createrVision中最小的 则表示已成功获得锁，就可以退出了
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">ownerKey</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="nx">ownerKey</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">CreateRevision</span> <span class="o">==</span> <span class="nx">m</span><span class="p">.</span><span class="nx">myRev</span> <span class="p">{</span>
+		<span class="c1">// 拿当前进程的 Revision 和 Owner 的 CreateVision 比较，如果相等，就是拿到了锁,直接返回
+</span><span class="c1"></span>		<span class="nx">m</span><span class="p">.</span><span class="nx">hdr</span> <span class="p">=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Header</span>
+		<span class="k">return</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+	<span class="nx">client</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">s</span><span class="p">.</span><span class="nf">Client</span><span class="p">()</span>
+	<span class="c1">// wait for deletion revisions prior to myKey
+</span><span class="c1"></span>	<span class="c1">// 走到这里代表没有获得锁，需要等待之前的锁被释放，即 revision 小于当前 revision 的 kv 被删除
+</span><span class="c1"></span>	<span class="nx">hdr</span><span class="p">,</span> <span class="nx">werr</span> <span class="o">:=</span> <span class="nf">waitDeletes</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">client</span><span class="p">,</span> <span class="nx">m</span><span class="p">.</span><span class="nx">pfx</span><span class="p">,</span> <span class="nx">m</span><span class="p">.</span><span class="nx">myRev</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+	<span class="c1">// 阻塞等待 Owner 释放锁，下面分析 waitDeletes
+</span><span class="c1"></span>	<span class="c1">// release lock key if wait failed
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">werr</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nx">m</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">(</span><span class="nx">client</span><span class="p">.</span><span class="nf">Ctx</span><span class="p">())</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="c1">// 成功获取锁
+</span><span class="c1"></span>		<span class="nx">m</span><span class="p">.</span><span class="nx">hdr</span> <span class="p">=</span> <span class="nx">hdr</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">werr</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>再看看 waitDeletes函数的行为, waitDeletes模拟了一种公平的先来后到的排队逻辑，只循环等待比当前 Key 的 CreateRevision 值小的Key 被删除后，锁释放后才返回 ，注意上面的关键字：循环等待。此处正是利用了 Revision 是单调递增的特性来实现。</p>
+<p>很多blog里面都解释到，只需要watch比当前CreateRevision小的第一个key值就可以了，可以避免惊群效应，那这里为啥还要for循环来watch呢？</p>
+<p>我的理解：就像排队，你前面排了很多人，但是你前面的这个大哥排到一半提前走了（进程崩了），但你还是要继续排队。。。这种情况还是少数，大都是办完事才走的</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// 注意 waitDeletes 的调用方式：hdr, werr := waitDeletes(ctx, client, m.pfx, m.myRev-1)
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">waitDeletes</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">client</span> <span class="o">*</span><span class="nx">v3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">pfx</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">maxCreateRev</span> <span class="kt">int64</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">pb</span><span class="p">.</span><span class="nx">ResponseHeader</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+   <span class="c1">// 注意 WithLastCreate 和 WithMaxCreateRev 这两个特性
+</span><span class="c1"></span>   <span class="nx">getOpts</span> <span class="o">:=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">v3</span><span class="p">.</span><span class="nf">WithLastCreate</span><span class="p">(),</span> <span class="nx">v3</span><span class="p">.</span><span class="nf">WithMaxCreateRev</span><span class="p">(</span><span class="nx">maxCreateRev</span><span class="p">))</span>
+   <span class="k">for</span> <span class="p">{</span>
+      <span class="c1">// 循环看前面没有没人排队
+</span><span class="c1"></span>      <span class="nx">resp</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">client</span><span class="p">.</span><span class="nf">Get</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">pfx</span><span class="p">,</span> <span class="nx">getOpts</span><span class="o">...</span><span class="p">)</span>
+      <span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+         <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">resp</span><span class="p">.</span><span class="nx">Kvs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">{</span>
+         <span class="c1">// 表示在 maxCreateRev 前面已经没有比本进程优先级更高的客户端了，本客户端可以获得锁
+</span><span class="c1"></span>         <span class="k">return</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Header</span><span class="p">,</span> <span class="kc">nil</span>
+      <span class="p">}</span>
+      <span class="nx">lastKey</span> <span class="o">:=</span> <span class="nb">string</span><span class="p">(</span><span class="nx">resp</span><span class="p">.</span><span class="nx">Kvs</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">Key</span><span class="p">)</span>
+      <span class="c1">// 阻塞，waitDelete 等待 lastKey+resp.Header.Revision 被成功删除
+</span><span class="c1"></span>      <span class="c1">//resp.Header.Revision 是当前最小的
+</span><span class="c1"></span>      <span class="k">if</span> <span class="nx">err</span> <span class="p">=</span> <span class="nf">waitDelete</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">client</span><span class="p">,</span> <span class="nx">lastKey</span><span class="p">,</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Header</span><span class="p">.</span><span class="nx">Revision</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+         <span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="nx">err</span>
+      <span class="p">}</span>
+   <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">//
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">waitDelete</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">client</span> <span class="o">*</span><span class="nx">v3</span><span class="p">.</span><span class="nx">Client</span><span class="p">,</span> <span class="nx">key</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">rev</span> <span class="kt">int64</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+   <span class="nx">cctx</span><span class="p">,</span> <span class="nx">cancel</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithCancel</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+   <span class="k">defer</span> <span class="nf">cancel</span><span class="p">()</span>
+
+   <span class="kd">var</span> <span class="nx">wr</span> <span class="nx">v3</span><span class="p">.</span><span class="nx">WatchResponse</span>
+   <span class="c1">// wch 是个 channel，key 被删除后会往这个 chan 发数据
+</span><span class="c1"></span>   <span class="nx">wch</span> <span class="o">:=</span> <span class="nx">client</span><span class="p">.</span><span class="nf">Watch</span><span class="p">(</span><span class="nx">cctx</span><span class="p">,</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">v3</span><span class="p">.</span><span class="nf">WithRev</span><span class="p">(</span><span class="nx">rev</span><span class="p">))</span>
+   <span class="k">for</span> <span class="nx">wr</span> <span class="p">=</span> <span class="k">range</span> <span class="nx">wch</span> <span class="p">{</span>
+      <span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">ev</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">wr</span><span class="p">.</span><span class="nx">Events</span> <span class="p">{</span>
+         <span class="k">if</span> <span class="nx">ev</span><span class="p">.</span><span class="nx">Type</span> <span class="o">==</span> <span class="nx">mvccpb</span><span class="p">.</span><span class="nx">DELETE</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="kc">nil</span>
+         <span class="p">}</span>
+      <span class="p">}</span>
+   <span class="p">}</span>
+   <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">wr</span><span class="p">.</span><span class="nf">Err</span><span class="p">();</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">err</span>
+   <span class="p">}</span>
+   <span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nf">Err</span><span class="p">();</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">err</span>
+   <span class="p">}</span>
+   <span class="k">return</span> <span class="nx">fmt</span><span class="p">.</span><span class="nf">Errorf</span><span class="p">(</span><span class="s">&#34;lost watcher waiting for delete&#34;</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>使用 Etcd 实现分布式锁的架构图如下：</p>
+<p><img src="https://raw.githubusercontent.com/jeffmingup/image/master/img/etcd_lock.png" alt="etcd-d-lock"></p>
+<h2 id="总结下-etcd-分布式锁的步骤">总结下 Etcd 分布式锁的步骤</h2>
+<p>分析完 <code>concurrency</code> 包的核心逻辑，这里总结下基于 Etcd 构造（公平式长期）分布式锁的一般流程如下：</p>
+<ol>
+<li>假设分布式锁的 Name 为 <code>/root/lockname</code>，用来控制某个共享资源，<code>concurrency</code> 会自动将其转换为目录形式：<code>/root/lockname/</code></li>
+<li>客户端 A 连接 Etcd，创建一个租约 Leaseid_A，并设置 TTL（以业务逻辑来定 TTL 的时间）, 以 <code>/root/lockname</code> 为前缀创建全局唯一的 Key，该 Key 的组织形式为 <code>/root/lockname/{leaseid_A}</code>，客户端 A 将此 Key 绑定租约写入 Etcd，同时调用 TXN 事务查询写入的情况和具有相同前缀 <code>/root/lockname/</code> 的 <code>Revision</code> 的排序情况</li>
+<li>客户端 A 判断自己是否获得锁，以前缀 <code>/root/lockname/</code> 读取 keyValue 列表（keyValue 中带有 Key 对应的 <code>Revision</code>），判断自己 Key 的 <code>Revision</code> 是否为当前列表中最小的，如果是则认为获得锁；否则阻塞监听列表中前一个 <code>Revision</code> 比自己小的 Key 的删除事件，一旦监听到删除事件或者因租约失效而删除的事件，则自己获得锁</li>
+<li>执行业务逻辑，操作共享资源</li>
+<li>释放分布式锁，现网的程序逻辑需要实现在正常和异常条件下的释放锁的策略，如捕获 <code>SIGTERM</code> 后执行 <code>Unlock</code>，或者异常退出时，有完善的监控和及时删除 Etcd 中的 Key 的异步机制。</li>
+<li>当客户端持有锁期间，其它客户端只能等待，为了避免等待期间租约失效，客户端需创建一个定时任务进行续约续期。如果持有锁期间客户端崩溃，心跳停止，Key 将因租约到期而被删除，从而锁释放，避免死锁。</li>
+</ol>
+<p>参考资料</p>
+<ul>
+<li>
+<p><a href="https://pandaychen.github.io/2019/10/24/ETCD-DISTRIBUTED-LOCK/">Etcd 应用开发之分布式锁</a></p>
+</li>
+<li>
+<p><a href="https://github.com/etcd-io/etcd/tree/v3.3.10/clientv3/concurrency">Etcdv3.3.10：concurrency</a></p>
+</li>
+</ul>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">王明</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2021-09-17
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        
+        <a class="next" href="https://jeffmingup.github.io/blog/post/oauth2/">
+            <span class="next-text nav-default">OAuth2授权框架</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        <div id="gitalk-container"></div>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+      var gitalk = new Gitalk({
+        id: '2021-09-17 15:56:49 \x2b0800 CST',
+        title: '分布式锁理解及etcd实现方案',
+        clientID: '594c5d359f317c8119dc',
+        clientSecret: '808944f21937c3b85840b3b3d119d7e6e4a104d3',
+        repo: 'blog',
+        owner: 'jeffmingup',
+        admin: ['jeffmingup'],
+        body: decodeURI(location.href)
+      });
+      gitalk.render('gitalk-container');
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/gitalk/gitalk">comments powered by gitalk.</a></noscript>
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:1920588251@qq.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/jeffmingup" class="iconfont icon-github" title="github"></a>
+  <a href="https://jeffmingup.github.io/blog/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2020 - 
+    2021
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">王明</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="https://jeffmingup.github.io/blog/js/main.min.d7b7ada643c9c1a983026e177f141f7363b4640d619caf01d8831a6718cd44ea.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
