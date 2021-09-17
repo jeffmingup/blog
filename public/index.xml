@@ -6,10 +6,19 @@
     <description>Recent content on 王明的博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Wed, 15 Sep 2021 10:25:53 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 17 Sep 2021 15:56:49 +0800</lastBuildDate>
     
 	<atom:link href="https://jeffmingup.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>分布式锁理解及etcd实现方案</title>
+      <link>https://jeffmingup.github.io/blog/post/etcd/</link>
+      <pubDate>Fri, 17 Sep 2021 15:56:49 +0800</pubDate>
+      
+      <guid>https://jeffmingup.github.io/blog/post/etcd/</guid>
+      <description>分布式锁基础 分布式锁，是控制分布式系统之间同步访问共享资源的一种方式。在分布式系统中，常常需要协调他们的动作。如果不同的系统或是同一个系统的</description>
+    </item>
     
     <item>
       <title>OAuth2授权框架</title>
