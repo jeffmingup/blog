@@ -49,7 +49,7 @@
 <meta itemprop="description" content="分布式锁基础 分布式锁，是控制分布式系统之间同步访问共享资源的一种方式。在分布式系统中，常常需要协调他们的动作。如果不同的系统或是同一个系统的">
 <meta itemprop="datePublished" content="2021-09-17T15:56:49&#43;08:00" />
 <meta itemprop="dateModified" content="2021-09-17T15:56:49&#43;08:00" />
-<meta itemprop="wordCount" content="4811">
+<meta itemprop="wordCount" content="4788">
 
 
 
@@ -136,11 +136,7 @@
       <ul>
         <li><a href="#分布式锁基础">分布式锁基础</a>
           <ul>
-            <li><a href="#分布式锁应该具备一下特点">分布式锁应该具备一下特点：</a></li>
-            <li><a href="#--互斥性--"><!--互斥性--></a></li>
-            <li><a href="#--安全性--"><!--安全性--></a></li>
-            <li><a href="#--可用性--"><!--可用性--></a></li>
-            <li><a href="#--对称性--"><!--对称性--></a></li>
+            <li><a href="#分布式锁特点">分布式锁特点</a></li>
           </ul>
         </li>
         <li><a href="#redis分布式锁">Redis分布式锁</a>
@@ -151,8 +147,8 @@
           </ul>
         </li>
         <li><a href="#etcd-特性">Etcd 特性</a></li>
-        <li><a href="#etcd分布式锁官方concurrency-包分析">Etcd分布式锁，官方Concurrency 包分析</a></li>
-        <li><a href="#总结下-etcd-分布式锁的步骤">总结下 Etcd 分布式锁的步骤</a></li>
+        <li><a href="#官方concurrency-包分析">官方Concurrency 包分析</a></li>
+        <li><a href="#总结步骤">总结步骤</a></li>
       </ul>
     </li>
   </ul>
@@ -162,20 +158,28 @@
     <div class="post-content">
       <h2 id="分布式锁基础">分布式锁基础</h2>
 <p>分布式锁，是控制分布式系统之间同步访问共享资源的一种方式。在分布式系统中，常常需要协调他们的动作。如果不同的系统或是同一个系统的不同主机之间共享了一个或一组资源，那么访问这些资源的时候，往往需要互斥来防止彼此干扰来保证一致性，在这种情况下，便需要使用到分布式锁。</p>
-<h3 id="分布式锁应该具备一下特点">分布式锁应该具备一下特点：</h3>
+<h3 id="分布式锁特点">分布式锁特点</h3>
 <ul>
-<li>互斥性：任意时刻，同一个锁，只有一个进程能持有</li>
-<li>安全性：避免死锁，当进程没有主动释放锁（进程崩溃退出），保证其他进程能够加锁</li>
-<li>可用性：当提供锁的服务节点故障（宕机）时，热备节点能够接替故障的节点继续提供服务，并保证自身持有的数据与故障节点一致</li>
-<li>对称性：对同一个锁，加锁和解锁必须是同一个进程，即某进程不能把其他进程持有的锁给释放了</li>
+<li>
+<p>互斥性：任意时刻，同一个锁，只有一个进程能持有</p>
+</li>
+<li>
+<p>安全性：避免死锁，当进程没有主动释放锁（进程崩溃退出），保证其他进程能够加锁</p>
+</li>
+<li>
+<p>可用性：当提供锁的服务节点故障（宕机）时，热备节点能够接替故障的节点继续提供服务，并保证自身持有的数据与故障节点一致</p>
+</li>
+<li>
+<p>对称性：对同一个锁，加锁和解锁必须是同一个进程，即某进程不能把其他进程持有的锁给释放了</p>
+</li>
 </ul>
-<h3 id="--互斥性--"><!--互斥性--></h3>
+ <!--互斥性-->
 <!--这个没啥好说的，要满足这个特性，一般是多进程共同使用同一个分布式锁服务来管理。-->
-<h3 id="--安全性--"><!--安全性--></h3>
+ <!--安全性-->
 <!--要满足进程崩溃之后，不会出现死锁，就需要给锁加上过期时间。进程崩溃了，锁过期依然会释放。如果出现进程还没处理完，锁就过期了也不行，所以需要守护进程来定时续约过期时间。-->
-<h3 id="--可用性--"><!--可用性--></h3>
+ <!--可用性-->
 <!--这个需要锁服务本身是高可用，像redis主从，etcd（本身就是高可用）-->
-<h3 id="--对称性--"><!--对称性--></h3>
+ <!--对称性-->
 <!--redis处理这个问题的方案是给key分配一个唯一值value，解锁的时候通过lua脚本来判断是不是自己的锁（自己设置的key-value）。-->
 <!--etcd是根据key前缀的方式，具体方案看下方，也不会出现这个问题-->
 <h2 id="redis分布式锁">Redis分布式锁</h2>
@@ -211,7 +215,7 @@
 <li>Prefix 机制：即前缀机制（或目录机制）。可以根据前缀（目录）获取该目录下所有的 Key 及对应的属性（包括 Key、Value 以及 Revision 等）</li>
 <li>Watch 机制：即监听机制，Watch 机制支持 Watch 某个固定的 Key，也支持 Watch 一个目录前缀（前缀机制），当被 Watch 的 Key 或目录发生变化，客户端将收到通知</li>
 </ul>
-<h2 id="etcd分布式锁官方concurrency-包分析">Etcd分布式锁，官方Concurrency 包分析</h2>
+<h2 id="官方concurrency-包分析">官方Concurrency 包分析</h2>
 <p><a href="https://github.com/etcd-io/etcd/tree/main/client/v3/concurrency">https://github.com/etcd-io/etcd/tree/main/client/v3/concurrency</a></p>
 <p>EtcdV3 版本的 Concurrency 包 提供了实现 分布式锁 及 分布式选主 的接口，这两个概念间是有共性的，譬如，谁抢到了锁谁就是 Master。这次主要说分布式锁，下面是锁的几个方法</p>
 <div class="highlight"><div class="chroma">
@@ -585,7 +589,7 @@
 </div>
 </div><p>使用 Etcd 实现分布式锁的架构图如下：</p>
 <p><img src="https://raw.githubusercontent.com/jeffmingup/image/master/img/etcd_lock.png" alt="etcd-d-lock"></p>
-<h2 id="总结下-etcd-分布式锁的步骤">总结下 Etcd 分布式锁的步骤</h2>
+<h2 id="总结步骤">总结步骤</h2>
 <p>分析完 <code>concurrency</code> 包的核心逻辑，这里总结下基于 Etcd 构造（公平式长期）分布式锁的一般流程如下：</p>
 <ol>
 <li>假设分布式锁的 Name 为 <code>/root/lockname</code>，用来控制某个共享资源，<code>concurrency</code> 会自动将其转换为目录形式：<code>/root/lockname/</code></li>
