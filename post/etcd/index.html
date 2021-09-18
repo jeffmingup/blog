@@ -23,7 +23,7 @@
 
 
 
-<meta name="generator" content="Hugo 0.70.0 with theme even" />
+<meta name="generator" content="Hugo 0.68.3 with theme even" />
 
 
 <link rel="canonical" href="https://jeffmingup.github.io/blog/post/etcd/" />
@@ -49,7 +49,7 @@
 <meta itemprop="description" content="分布式锁基础 分布式锁，是控制分布式系统之间同步访问共享资源的一种方式。在分布式系统中，常常需要协调他们的动作。如果不同的系统或是同一个系统的">
 <meta itemprop="datePublished" content="2021-09-17T15:56:49&#43;08:00" />
 <meta itemprop="dateModified" content="2021-09-17T15:56:49&#43;08:00" />
-<meta itemprop="wordCount" content="4788">
+<meta itemprop="wordCount" content="4804">
 
 
 
@@ -358,7 +358,7 @@
   <span class="c1">//If(cmp) 为false, 执行 Else(get,getOwner)，myRev则是get操作返回的CreateRevision属性
 </span><span class="c1"></span>	<span class="k">if</span> <span class="p">!</span><span class="nx">resp</span><span class="p">.</span><span class="nx">Succeeded</span> <span class="p">{</span>
     <span class="c1">//resp.Responses[0] 表示事务Then()/Else()方法中的第一个操作的响应值
-</span><span class="c1"></span>    <span class="c1">//resp.Responses[1] 表示事务Then()/Else()方法中的第二个操作的响应值
+</span><span class="c1"></span>    <span class="c1">//resp.Responses[1] 表示事务Then()/Else()方法中的第二个操作的响应值，以此类推
 </span><span class="c1"></span>		<span class="nx">m</span><span class="p">.</span><span class="nx">myRev</span> <span class="p">=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Responses</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nf">GetResponseRange</span><span class="p">().</span><span class="nx">Kvs</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">CreateRevision</span>
 	<span class="p">}</span>
 	<span class="k">return</span> <span class="nx">resp</span><span class="p">,</span> <span class="kc">nil</span>
@@ -450,6 +450,7 @@
 </span><span class="lnt">30
 </span><span class="lnt">31
 </span><span class="lnt">32
+</span><span class="lnt">33
 </span></code></pre></td>
 <td class="lntd">
 <pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// Lock locks the mutex with a cancelable context. If the context is canceled
@@ -462,9 +463,10 @@
 	<span class="p">}</span>
 	<span class="c1">// if no key on prefix / the minimum rev is key, already hold the lock
 </span><span class="c1"></span>	<span class="nx">ownerKey</span> <span class="o">:=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Responses</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="nf">GetResponseRange</span><span class="p">().</span><span class="nx">Kvs</span>
-  <span class="c1">// 当前以 lockkey 为 Prefix下没有值，则表示当前没有人获得锁（第一次场景），这个操作有疑问，之前不是有put操作吗？一定会有值的啊，验证如果get和获取前缀是一个事务，我先get（），然后别的客户端删除，然后获取前缀能获取到吗？
-</span><span class="c1"></span>	<span class="c1">// 或者锁的 owner 的 CreateRevision 等于当前的 kv 的 Revision，
-</span><span class="c1"></span>  <span class="c1">// 表示自己是当前以 lockkey 为 Prefix 中createrVision中最小的 则表示已成功获得锁，就可以退出了
+  <span class="c1">// 当前以 lockkey 为 Prefix下没有值，则表示当前没有人获得锁（第一次场景），
+</span><span class="c1"></span>  <span class="c1">//这个操作有疑问，之前不是有put或者get操作吗？而且是一个事务，一定会有值的啊，可能是习惯问题，使用slice的时候，先判断len()长度。但我以为确实是无用功。。。
+</span><span class="c1"></span> <span class="c1">// 或者锁的 owner 的 CreateRevision 等于当前的 kv 的 Revision，
+</span><span class="c1"></span> <span class="c1">// 表示自己是当前以 lockkey 为 Prefix 中createrVision中最小的 则表示已成功获得锁，就可以退出了
 </span><span class="c1"></span>	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">ownerKey</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">||</span> <span class="nx">ownerKey</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">CreateRevision</span> <span class="o">==</span> <span class="nx">m</span><span class="p">.</span><span class="nx">myRev</span> <span class="p">{</span>
 		<span class="c1">// 拿当前进程的 Revision 和 Owner 的 CreateVision 比较，如果相等，就是拿到了锁,直接返回
 </span><span class="c1"></span>		<span class="nx">m</span><span class="p">.</span><span class="nx">hdr</span> <span class="p">=</span> <span class="nx">resp</span><span class="p">.</span><span class="nx">Header</span>
