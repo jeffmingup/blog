@@ -154,7 +154,7 @@ func (m *Mutex) tryAcquire(ctx context.Context) (*v3.TxnResponse, error) {
   //If(cmp) 为false, 执行 Else(get,getOwner)，myRev则是get操作返回的CreateRevision属性
 	if !resp.Succeeded {
     //resp.Responses[0] 表示事务Then()/Else()方法中的第一个操作的响应值
-    //resp.Responses[1] 表示事务Then()/Else()方法中的第二个操作的响应值
+    //resp.Responses[1] 表示事务Then()/Else()方法中的第二个操作的响应值，以此类推
 		m.myRev = resp.Responses[0].GetResponseRange().Kvs[0].CreateRevision
 	}
 	return resp, nil
@@ -202,9 +202,10 @@ func (m *Mutex) Lock(ctx context.Context) error {
 	}
 	// if no key on prefix / the minimum rev is key, already hold the lock
 	ownerKey := resp.Responses[1].GetResponseRange().Kvs
-  // 当前以 lockkey 为 Prefix下没有值，则表示当前没有人获得锁（第一次场景），这个操作有疑问，之前不是有put操作吗？一定会有值的啊，验证如果get和获取前缀是一个事务，我先get（），然后别的客户端删除，然后获取前缀能获取到吗？
-	// 或者锁的 owner 的 CreateRevision 等于当前的 kv 的 Revision，
-  // 表示自己是当前以 lockkey 为 Prefix 中createrVision中最小的 则表示已成功获得锁，就可以退出了
+  // 当前以 lockkey 为 Prefix下没有值，则表示当前没有人获得锁（第一次场景），
+  //这个操作有疑问，之前不是有put或者get操作吗？而且是一个事务，一定会有值的啊，可能是习惯问题，使用slice的时候，先判断len()长度。但我以为确实是无用功。。。
+ // 或者锁的 owner 的 CreateRevision 等于当前的 kv 的 Revision，
+ // 表示自己是当前以 lockkey 为 Prefix 中createrVision中最小的 则表示已成功获得锁，就可以退出了
 	if len(ownerKey) == 0 || ownerKey[0].CreateRevision == m.myRev {
 		// 拿当前进程的 Revision 和 Owner 的 CreateVision 比较，如果相等，就是拿到了锁,直接返回
 		m.hdr = resp.Header
