@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>文件系统了解及对比选型 - 王明的博客</title>
+  <meta name="renderer" content="webkit" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+<meta name="theme-color" content="#f8f5ec" />
+<meta name="msapplication-navbutton-color" content="#f8f5ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="#f8f5ec">
+
+
+<meta name="author" content="王明" /><meta name="description" content="分布式文件系统（Distributed file system，DFS），或是网络文件系统（Network File System），是一种允许文件透过网络在多" /><meta name="keywords" content="王明, 博客, blog" />
+
+
+
+
+
+
+<meta name="generator" content="Hugo 0.68.3 with theme even" />
+
+
+<link rel="canonical" href="https://jeffmingup.github.io/blog/post/distributedstorage/" />
+<link rel="apple-touch-icon" sizes="180x180" href="https://jeffmingup.github.io/blog/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://jeffmingup.github.io/blog/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://jeffmingup.github.io/blog/favicon-16x16.png">
+<link rel="manifest" href="https://jeffmingup.github.io/blog/manifest.json">
+<link rel="mask-icon" href="https://jeffmingup.github.io/blog/safari-pinned-tab.svg" color="#5bbad5">
+
+
+
+<link href="https://jeffmingup.github.io/blog/sass/main.min.651e6917abb0239242daa570c2bec9867267bbcd83646da5a850afe573347b44.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.css" integrity="sha256-7TyXnr2YU040zfSP+rEcz29ggW4j56/ujTPwjMzyqFY=" crossorigin="anonymous">
+
+
+<meta property="og:title" content="文件系统了解及对比选型" />
+<meta property="og:description" content="分布式文件系统（Distributed file system，DFS），或是网络文件系统（Network File System），是一种允许文件透过网络在多" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://jeffmingup.github.io/blog/post/distributedstorage/" />
+<meta property="article:published_time" content="2021-11-11T13:45:36+08:00" />
+<meta property="article:modified_time" content="2021-11-11T13:45:36+08:00" />
+<meta itemprop="name" content="文件系统了解及对比选型">
+<meta itemprop="description" content="分布式文件系统（Distributed file system，DFS），或是网络文件系统（Network File System），是一种允许文件透过网络在多">
+<meta itemprop="datePublished" content="2021-11-11T13:45:36&#43;08:00" />
+<meta itemprop="dateModified" content="2021-11-11T13:45:36&#43;08:00" />
+<meta itemprop="wordCount" content="4568">
+
+
+
+<meta itemprop="keywords" content="" /><meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="文件系统了解及对比选型"/>
+<meta name="twitter:description" content="分布式文件系统（Distributed file system，DFS），或是网络文件系统（Network File System），是一种允许文件透过网络在多"/>
+
+<!--[if lte IE 9]>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/classlist/1.1.20170427/classList.min.js"></script>
+<![endif]-->
+
+<!--[if lt IE 9]>
+  <script src="https://cdn.jsdelivr.net/npm/html5shiv@3.7.3/dist/html5shiv.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/respond.js@1.4.2/dest/respond.min.js"></script>
+<![endif]-->
+
+</head>
+<body>
+  <div id="mobile-navbar" class="mobile-navbar">
+  <div class="mobile-header-logo">
+    <a href="https://jeffmingup.github.io/blog/" class="logo">Ming</a>
+  </div>
+  <div class="mobile-navbar-icon">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+</div>
+<nav id="mobile-menu" class="mobile-menu slideout-menu">
+  <ul class="mobile-menu-list">
+    <a href="https://jeffmingup.github.io/blog/">
+        <li class="mobile-menu-item">Home</li>
+      </a><a href="https://jeffmingup.github.io/blog/post/">
+        <li class="mobile-menu-item">Archives</li>
+      </a><a href="https://jeffmingup.github.io/blog/tags/">
+        <li class="mobile-menu-item">Tags</li>
+      </a><a href="https://jeffmingup.github.io/blog/categories/">
+        <li class="mobile-menu-item">Categories</li>
+      </a>
+  </ul>
+</nav>
+  <div class="container" id="mobile-panel">
+    <header id="header" class="header">
+        <div class="logo-wrapper">
+  <a href="https://jeffmingup.github.io/blog/" class="logo">Ming</a>
+</div>
+
+<nav class="site-navbar">
+  <ul id="menu" class="menu">
+    <li class="menu-item">
+        <a class="menu-item-link" href="https://jeffmingup.github.io/blog/">Home</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="https://jeffmingup.github.io/blog/post/">Archives</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="https://jeffmingup.github.io/blog/tags/">Tags</a>
+      </li><li class="menu-item">
+        <a class="menu-item-link" href="https://jeffmingup.github.io/blog/categories/">Categories</a>
+      </li>
+  </ul>
+</nav>
+    </header>
+
+    <main id="main" class="main">
+      <div class="content-wrapper">
+        <div id="content" class="content">
+          <article class="post">
+    
+    <header class="post-header">
+      <h1 class="post-title">文件系统了解及对比选型</h1>
+
+      <div class="post-meta">
+        <span class="post-time"> 2021-11-11 </span>
+        
+        
+      </div>
+    </header>
+
+    <div class="post-toc" id="post-toc">
+  <h2 class="post-toc-title">文章目录</h2>
+  <div class="post-toc-content always-active">
+    <nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#1-专业名词">1. 专业名词</a></li>
+        <li><a href="#2-存储方式">2. 存储方式</a>
+          <ul>
+            <li><a href="#21-块存储">2.1. 块存储</a></li>
+            <li><a href="#22-文件存储">2.2. 文件存储</a></li>
+            <li><a href="#23-对象存储">2.3. 对象存储</a></li>
+            <li><a href="#24-性能对比">2.4. 性能对比</a></li>
+            <li><a href="#25-访问方式">2.5. 访问方式</a></li>
+          </ul>
+        </li>
+        <li><a href="#对象存储的核心概念">对象存储的核心概念</a></li>
+        <li><a href="#对象存储是如何管理对象的">对象存储是如何管理对象的</a></li>
+        <li><a href="#对象存储是如何有目录结构的">对象存储是如何有目录结构的</a></li>
+        <li><a href="#对象存储如何防止数据丢失">对象存储如何防止数据丢失</a></li>
+        <li><a href="#对象存储开源实现">对象存储开源实现</a></li>
+        <li><a href="#文件系统">文件系统</a></li>
+        <li><a href="#minio-和其他oss存储解决方案各有什么优缺点">MinIO 和其他OSS存储解决方案各有什么优缺点？</a>
+          <ul>
+            <li><a href="#ceph">Ceph</a></li>
+            <li><a href="#minio">Minio</a></li>
+            <li><a href="#fastdfs">FastDFS</a></li>
+          </ul>
+        </li>
+        <li><a href="#ipfs">IPFS</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+  </div>
+</div>
+    <div class="post-content">
+      <p><strong>分布式文件系统</strong>（<strong>Distributed file system，DFS</strong>），或是网络文件系统（Network File System），是一种允许文件透过网络在多台主机上分享的文件系统，可让多机器上的多用户分享文件和存储空间。分布式文件系统解决的最大的问题是资源共享的问题，因此分布式文件系统最大的特点是多个客户端可以访问相同的服务端</p>
+<h2 id="1-专业名词">1. 专业名词</h2>
+<table>
+<thead>
+<tr>
+<th align="center">缩写</th>
+<th align="center">全称</th>
+<th align="center">注释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><strong>SDS</strong></td>
+<td align="center">Software Defined Storag</td>
+<td align="center">软件定义存储技术</td>
+</tr>
+<tr>
+<td align="center"><strong>RAID</strong></td>
+<td align="center">Redundant Array of Independent Disk</td>
+<td align="center">磁盘阵列技术</td>
+</tr>
+<tr>
+<td align="center"><strong>DG</strong></td>
+<td align="center">Disk Group</td>
+<td align="center">硬盘组</td>
+</tr>
+<tr>
+<td align="center"><strong>VD</strong></td>
+<td align="center">Virtual Disk</td>
+<td align="center">虚拟磁盘（等效磁盘组）</td>
+</tr>
+<tr>
+<td align="center"><strong>Mirroring</strong></td>
+<td align="center">-</td>
+<td align="center">镜像技术，又称为复制技术(Replication)</td>
+</tr>
+<tr>
+<td align="center"><strong>Striping</strong></td>
+<td align="center">-</td>
+<td align="center">条带（可提供并行的数据吞吐能力）</td>
+</tr>
+<tr>
+<td align="center"><strong>Erasure Code</strong></td>
+<td align="center">-</td>
+<td align="center">纠删码（提供高可用性和高速读写能力）</td>
+</tr>
+<tr>
+<td align="center"><strong>RADOS</strong></td>
+<td align="center">Reliable，Autonomic，Distributed Object Store</td>
+<td align="center">可靠的自主的分布式对象存储</td>
+</tr>
+<tr>
+<td align="center"><strong>OSD</strong></td>
+<td align="center">Object Storage Device</td>
+<td align="center">对象存储设备</td>
+</tr>
+<tr>
+<td align="center"><strong>MDS</strong></td>
+<td align="center">Metadata Server</td>
+<td align="center">元数据服务</td>
+</tr>
+<tr>
+<td align="center"><strong>MTTR</strong></td>
+<td align="center">Mean Time To Restoration</td>
+<td align="center">平均恢复时间</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2-存储方式">2. 存储方式</h2>
+<p>块存储、文件存储、对象存储</p>
+<h3 id="21-块存储">2.1. 块存储</h3>
+<p>就好比硬盘一样，直接挂在到主机， 一般用于主机的直接存储空间和数据库应用(MySQL)的存储</p>
+<p><strong>块存储</strong>(<strong>DAS/SAN</strong>)通常应用在某些专有的系统中，这类应用要求很高的随机读写性能和高可靠性，上面搭载的通常是 Oracle/DB2 这种传统数据库，连接通常是以 FC 光纤(8Gb/16Gb)为主，走光纤协议。如果要求稍低一些，也会出现基于千兆/万兆以太网的连接方式，MySQL 这种数据库就可能会使用 IP SAN，走 iSCSI 协议</p>
+<p>通常使用<strong>块存储</strong>的都是系统而非用户，并发访问不会很多，经常出现一套存储只服务一个应用系统，例如如交易系统，计费系统。典型行业如金融，制造，能源，电信等</p>
+<h3 id="22-文件存储">2.2. 文件存储</h3>
+<p><strong>文件存储</strong>(<strong>NAS</strong>)相对来说就更能兼顾多个应用和更多用户访问，同时提供方便的数据共享手段</p>
+<p>在 PC 时代，数据共享也大多是用文件的形式，比如常见的的 FTP 服务，NFS 服务，Samba 共享这些都是属于典型的文件存储。几十个用户甚至上百用户的文件存储共享访问都可以用 NAS 存储加以解决</p>
+<p>在中小企业市场，一两台 NAS 存储设备就能支撑整个 IT 部门了。CRM 系统，SCM 系统，OA 系统，邮件系统都可以使用 NAS 存储统统搞定。甚至在公有云发展的早几年，用户规模没有上来时，云存储的底层硬件也有用几套 NAS 存储设备就解决的，甚至云主机的镜像也有放在 NAS 存储上的例子</p>
+<p><strong>文件存储</strong>的广泛兼容性和易用性，是这类存储的突出特点，但是从性能上来看，相对 SAN 就要低一些。NAS 存储基本上是以太网访问模式，普通千兆网，走 NFS/CIFS 协议</p>
+<h3 id="23-对象存储">2.3. 对象存储</h3>
+<p>前面说到的<strong>块存储</strong>和<strong>文件存储</strong>，基本上都还是在专有的局域网络内部使用，而<strong>对象存储</strong>的优势场景却是互联网或者公网，主要解决海量数据，海量并发访问的需求</p>
+<p>基于互联网的应用才是对象存储的主要适配（当然这个条件同样适用于云计算，基于互联网的应用最容易迁移到云上），基本所有成熟的公有云都提供了对象存储产品，不管是国内还是国外</p>
+<p><strong>对象存储</strong>常见的适配应用如网盘、媒体娱乐，医疗 PACS，气象，归档等数据量超大而又相对 冷数据 和非在线处理的应用类型，这类应用单个数据大，总量也大，适合对象存储海量和易扩展的特点</p>
+<p>网盘类应用也差不多，数据总量很大，另外还有并发访问量也大，支持 10 万级用户访问这种需求就值得单列一个项目了。归档类应用只是数据量大的 冷数据，并发访问的需求倒是不太突出</p>
+<p>另外基于移动端的一些新兴应用也是适合的，智能手机和移动互联网普及的情况下，所谓 UGD（用户产生的数据，手机的照片视频）总量和用户数都是很大挑战。毕竟直接使用 HTTP get/put 就能直接实现数据存取，对移动应用来说还是有一定吸引力的</p>
+<p><strong>对象存储</strong>的访问通常是在互联网，走 HTTP 协议，性能方面，单独看一个连接的是不高的（还要解决掉线断点续传之类的可靠性问题），主要强大的地方是支持的并发数量，聚合起来的性能带宽就非常可观了</p>
+<h3 id="24-性能对比">2.4. 性能对比</h3>
+<ul>
+<li><strong>块存储就像超跑，根本不在意能不能多载几个人，要的就是极限速度和高速下的稳定性和可靠性</strong>，各大厂商出新产品都要去纽北赛道刷个单圈最快纪录，千方百计就为提高一两秒。<strong>块存储容量也不大，TB 这个数量级，支持的应用和适用的环境也比较专业</strong>（FC+Oracle），在乎的都是 IOPS 的性能值</li>
+<li><strong>文件存储像集卡，普适各种场合，又能装数据（数百TB），而且兼容性好</strong>，只要你是文件，各种货物都能往里塞，在不超过性能载荷的前提下，能拉动常见的各种系统。标准 POXIS 接口，后车门打开就能装卸。卡车也不挑路，不像块存储非要上赛道才能开，<strong>普通的千兆公路就能畅通无阻</strong>。速度虽然没有块存储超跑那么块，但跑个 80/100 码还是稳稳当当</li>
+<li><strong>对象存储就像海运货轮，应对的是&quot;真·海量&rdquo;，几十上百 PB 的数据</strong>，以集装箱 /container（桶/bucket）为单位码得整整齐齐，里面装满各种对象数据，十万客户发的货（数据），一条船就都处理得过来，<strong>按照键值</strong>（KeyVaule）记得清清楚楚。海运速度慢是慢点，有时候遇到点网络风暴还不稳定，但支持断点续传，最终还是能安全送达的，对大宗货物尤其是非结构化数据，整体上来看是最快捷便利的</li>
+</ul>
+<h3 id="25-访问方式">2.5. 访问方式</h3>
+<ul>
+<li><strong>块存储通常都是通过光纤网络连接</strong>，服务器/小机上配置 FC 光纤 HBA 卡，通过光纤交换机连接存储（IP SAN 可以通过千兆以太网，以 iSCSI 客户端连接存储），主机端以逻辑卷（Volume）的方式访问。连接成功后，应用访问存储是按起始地址，偏移量 Offset 的方法来访问的</li>
+<li><strong>文件存储通常只要是局域网内，千兆/百兆的以太网环境皆可</strong>。网线连上，服务器端通过操作系统内置的 NAS 客户端，如 NFS/CIFS/FTP 客户端挂载存储成为一个本地的文件夹后访问，只要符合 POXIS 标准，应用就可以用标准的 open，seek，write/read，close 这些方法对其访问操作</li>
+<li><strong>对象存储不在乎网络</strong>，而且它的访问比较有特色，只能存取删（put/get/delete），不能打开修改存盘。只能取下来改好后上传，去覆盖原对象</li>
+</ul>
+<h2 id="对象存储的核心概念">对象存储的核心概念</h2>
+<p>对象存储非常简单，只有2个核心概念：存储桶(Bucket)和对象(Object)。一个存储桶可以有很多个对象，这些对象都是平级的，也就是扁平的。</p>
+<p>在对象存储的时候，KEY就是对象的名称，Value就是对象的内容。所以对于对于是一个类似Hash，是一个KV方式存储。</p>
+<h2 id="对象存储是如何管理对象的">对象存储是如何管理对象的</h2>
+<p>既然我们的对象都是扁平存储的，而且还被分片了，那么是如何管理它们的，或者说如何找到我们想要的文件以及文件的信息等？这就是对象存储核心的对象元数据管理。</p>
+<p>对象的元数据就是用来管理数据的存储、分片以及数据本身的信息，因为元数据单独存储，所以我们可以为一个对象扩展任意多的元数据，这也是文件存储做不到的。</p>
+<h2 id="对象存储是如何有目录结构的">对象存储是如何有目录结构的</h2>
+<p>对象存储的底层设计都是扁平的，没有层次结构，但是我们看到的对象存储管理工具的确给我们提供了目录层次的管理，就像我们在使用文件系统一样，其实这样方式是通过KEY进行区分的。</p>
+<p>假设我们想达到<code>/static/1.jpg</code>这样的存储效果，那么在存储的时候，对于图片<code>1.jpg</code>保存在对象存储中的KEY是<code>/static/1.jpg</code>,通过KEY中的<code>/</code>分隔，达到多级目录的效果，其实本质是KEY做了改变。</p>
+<h2 id="对象存储如何防止数据丢失">对象存储如何防止数据丢失</h2>
+<p>以MinIO为例，对于分布式的对象存储系统，是采用纠删码的方式保证数据的安全。纠删码会把分布式的盘组成一个纠删码集合，默认情况下，哪怕丢失N/2的数据盘，数据也可以正常恢复使用。</p>
+<p>假设一个8块盘（可以分散在多个主机上）组成的纠删码集合，哪怕同时又4个盘损坏丢失，数据也可以正常使用，并且可以从中恢复，是不是很厉害。</p>
+<p>Minio采用的是开源的纠删码实现，可以参考<a href="https://www.flysnow.org/2020/08/09/github.com/klauspost/reedsolomon">github.com/klauspost/reedsolomon</a>了解更多实现。</p>
+<h2 id="对象存储开源实现">对象存储开源实现</h2>
+<p>对象存储业界比较有名的是GlusterFS和Ceph，MinIO是后起之秀，也是是Ceph的开发人员做的，采用Go语言实现。而且他的扩容机制是采用更简单的集群方式而不是节点方式，大大降低了维护的复杂度，因为节点的方式需要重新计算Hash以及对应的旧文件迁移，加一个节点原来的Hash就乱了。</p>
+<h2 id="文件系统">文件系统</h2>
+<p>开源分布式存储系统对比，还有很多其他，这里只列举这几款</p>
+<table>
+<thead>
+<tr>
+<th align="center">存储系统</th>
+<th align="center">Ceph</th>
+<th align="center">Swift</th>
+<th align="center">HDFS</th>
+<th align="center">FastDFS</th>
+<th align="center">Ambry</th>
+<th align="center">MinIO</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center"><strong>开发语言</strong></td>
+<td align="center">C++</td>
+<td align="center">Python</td>
+<td align="center">Java</td>
+<td align="center">C</td>
+<td align="center">Java</td>
+<td align="center">Go</td>
+</tr>
+<tr>
+<td align="center"><strong>开源协议</strong></td>
+<td align="center">LGPL</td>
+<td align="center">Apache</td>
+<td align="center">Apache</td>
+<td align="center">GPL3</td>
+<td align="center">Apache</td>
+<td align="center">Apache</td>
+</tr>
+<tr>
+<td align="center"><strong>存储方式</strong></td>
+<td align="center">对象/文件/块</td>
+<td align="center">对象</td>
+<td align="center">文件</td>
+<td align="center">文件/块</td>
+<td align="center">对象</td>
+<td align="center">对象</td>
+</tr>
+<tr>
+<td align="center"><strong>在线扩容</strong></td>
+<td align="center">支持</td>
+<td align="center">支持</td>
+<td align="center">支持</td>
+<td align="center">支持</td>
+<td align="center">支持</td>
+<td align="center">不支持</td>
+</tr>
+<tr>
+<td align="center"><strong>冗余备份</strong></td>
+<td align="center">支持</td>
+<td align="center">支持</td>
+<td align="center">支持</td>
+<td align="center">支持</td>
+<td align="center">支持</td>
+<td align="center">支持</td>
+</tr>
+<tr>
+<td align="center"><strong>单点故障</strong></td>
+<td align="center">不存在</td>
+<td align="center">不存在</td>
+<td align="center">存在</td>
+<td align="center">不存在</td>
+<td align="center">不存在</td>
+<td align="center">不存在</td>
+</tr>
+<tr>
+<td align="center"><strong>易用性</strong></td>
+<td align="center">一般</td>
+<td align="center">一般</td>
+<td align="center">一般</td>
+<td align="center">简单</td>
+<td align="center">简单</td>
+<td align="center">简单</td>
+</tr>
+<tr>
+<td align="center"><strong>跨集群</strong></td>
+<td align="center">不支持</td>
+<td align="center">-</td>
+<td align="center">不支持</td>
+<td align="center">部分支持</td>
+<td align="center">不支持</td>
+<td align="center">支持</td>
+</tr>
+<tr>
+<td align="center"><strong>适用场景</strong></td>
+<td align="center">大中小文件</td>
+<td align="center">大中小文件</td>
+<td align="center">大中文件</td>
+<td align="center">中小文件</td>
+<td align="center">大中小文件</td>
+<td align="center">大中小文件</td>
+</tr>
+</tbody>
+</table>
+<p>对比了 Github 的 Star，MinIO 增长的很快，而且官方还有中文文档提供，且部署相对简单，</p>
+<h2 id="minio-和其他oss存储解决方案各有什么优缺点">MinIO 和其他OSS存储解决方案各有什么优缺点？</h2>
+<p>这里主要针对Ceph、Minio、FastDFS 热门的存储解决方案进行比较。</p>
+<h3 id="ceph">Ceph</h3>
+<p><strong>优点</strong></p>
+<ul>
+<li>成熟</li>
+<li>红帽继子，ceph创始人已经加入红帽</li>
+<li>国内有所谓的ceph中国社区，私人机构，不活跃，文档有滞后，而且没有更新的迹象。</li>
+<li>从git上提交者来看，中国有几家公司的程序员在提交代码，星辰天合，easystack, 腾讯、阿里基于ceph在做云存储，但是在开源社区中不活跃，阿里一位叫liupan的有参与</li>
+<li>功能强大</li>
+<li>支持数千节点</li>
+<li>支持动态增加节点，自动平衡数据分布。（TODO，需要多长时间，add node时是否可以不间断运行）</li>
+<li>可配置性强，可针对不同场景进行调优</li>
+</ul>
+<p><strong>缺点</strong></p>
+<ul>
+<li>学习成本高，安装运维复杂。</li>
+</ul>
+<h3 id="minio">Minio</h3>
+<p><strong>优点</strong></p>
+<ul>
+<li>学习成本低，安装运维简单，开箱即用</li>
+<li>目前minio论坛推广给力，有问必答</li>
+<li>拥有大多热门语言的SDK，很方便</li>
+<li>数据保护：分布式Minio采用 纠删码来防范多个节点宕机和位衰减bit rot。分布式Minio至少需要4个硬盘，使用分布式Minio自动引入了纠删码功能。</li>
+<li>一致性：Minio在分布式和单机模式下，所有读写操作都严格遵守read-after-write一致性模型。</li>
+</ul>
+<p><strong>缺点</strong></p>
+<ul>
+<li>不支持动态增加节点，minio创始人的设计理念就是动态增加节点太复杂，可以采用其它方案来支持扩容。</li>
+</ul>
+<h3 id="fastdfs">FastDFS</h3>
+<p>fastdfs是阿里余庆做的一个个人项目，在一些互联网创业公司中有应用，没有官网，不活跃，6个contributors。</p>
+<h2 id="ipfs">IPFS</h2>
+<p>IPFS是一个旨在创建持久且分布式存储和共享文件的网络传输协议。它是一种内容可寻址的对等超媒体分发协议。在IPFS网络中的节点将构成一个分布式文件系统。</p>
+<p>IPFS是一个对等的分布式文件系统，它尝试为所有计算设备连接同一个文件系统。在某些方面，IPFS类似于万维网，也可以被视作一个独立的BitTorrent群、在同一个Git仓库中交换对象。 换种说法，IPFS提供了一个高吞吐量、按内容寻址的块存储模型，及与内容相关超連結。这形成了一个广义的Merkle有向无环图（DAG）。</p>
+<p>IPFS结合了分散式雜湊表、鼓励块交换和一个自我认证的命名空间。IPFS没有单点故障，并且节点不需要相互信任。分布式内容传递可以节约带宽，和防止HTTP方案可能遇到的DDoS攻击。</p>
+<p>该文件系统可以通过多种方式访问，包括FUSE与HTTP。将本地文件添加到IPFS文件系统可使其面向全世界可用。文件表示基于其哈希，因此有利于缓存。文件的分发采用一个基于BitTorrent的协议。其他查看内容的用户也有助于将内容提供给网络上的其他人。</p>
+<p>IPFS有一个称为IPNS的名称服务，它是一个基于PKI的全局命名空间，用于构筑信任链，这与其他NS兼容，并可以映射DNS、.onion、.bit等到IPNS。</p>
+
+    </div>
+
+    <div class="post-copyright">
+  <p class="copyright-item">
+    <span class="item-title">文章作者</span>
+    <span class="item-content">王明</span>
+  </p>
+  <p class="copyright-item">
+    <span class="item-title">上次更新</span>
+    <span class="item-content">
+        2021-11-11
+        
+    </span>
+  </p>
+  
+  
+</div>
+<footer class="post-footer">
+      
+      <nav class="post-nav">
+        
+        <a class="next" href="https://jeffmingup.github.io/blog/post/etcd/">
+            <span class="next-text nav-default">分布式锁理解及etcd实现方案</span>
+            <span class="next-text nav-mobile">下一篇</span>
+            <i class="iconfont icon-right"></i>
+          </a>
+      </nav>
+    </footer>
+  </article>
+        </div>
+        <div id="gitalk-container"></div>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+      var gitalk = new Gitalk({
+        id: '2021-11-11 13:45:36 \x2b0800 CST',
+        title: '文件系统了解及对比选型',
+        clientID: '594c5d359f317c8119dc',
+        clientSecret: '808944f21937c3b85840b3b3d119d7e6e4a104d3',
+        repo: 'blog',
+        owner: 'jeffmingup',
+        admin: ['jeffmingup'],
+        body: decodeURI(location.href)
+      });
+      gitalk.render('gitalk-container');
+    </script>
+    <noscript>Please enable JavaScript to view the <a href="https://github.com/gitalk/gitalk">comments powered by gitalk.</a></noscript>
+
+  
+
+  
+
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="social-links">
+      <a href="mailto:1920588251@qq.com" class="iconfont icon-email" title="email"></a>
+      <a href="https://github.com/jeffmingup" class="iconfont icon-github" title="github"></a>
+  <a href="https://jeffmingup.github.io/blog/index.xml" type="application/rss+xml" class="iconfont icon-rss" title="rss"></a>
+</div>
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://gohugo.io">Hugo</a> 强力驱动
+  </span>
+  <span class="division">|</span>
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/olOwOlo/hugo-theme-even">Even</a>
+  </span>
+
+  
+
+  <span class="copyright-year">
+    &copy; 
+    2020 - 
+    2021
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">王明</span>
+  </span>
+</div>
+    </footer>
+
+    <div class="back-to-top" id="back-to-top">
+      <i class="iconfont icon-up"></i>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.2.1/dist/jquery.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/slideout@1.0.1/dist/slideout.min.js" integrity="sha256-t+zJ/g8/KXIJMjSVQdnibt4dlaDxc9zXr/9oNPeWqdg=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.1.20/dist/jquery.fancybox.min.js" integrity="sha256-XVLffZaxoWfGUEbdzuLi7pwaUJv1cecsQJQqGLe7axY=" crossorigin="anonymous"></script>
+
+
+
+<script type="text/javascript" src="https://jeffmingup.github.io/blog/js/main.min.d7b7ada643c9c1a983026e177f141f7363b4640d619caf01d8831a6718cd44ea.js"></script>
+
+
+
+
+
+
+
+
+</body>
+</html>
